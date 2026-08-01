@@ -121,20 +121,6 @@ body.ready #boot{ opacity:0; pointer-events:none; }
 
 .hint{ font-family:"BlinkMac",sans-serif; font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; opacity:.5; text-align:center; }
 
-#gyroBtn{
-  pointer-events:auto; cursor:pointer;
-  font-family:"BlinkMac", sans-serif; font-size:11px; font-weight:700;
-  color:var(--bg); background:var(--glow); border:0; border-radius:100px;
-  padding:11px 20px; letter-spacing:.14em; text-transform:uppercase;
-  box-shadow:0 6px 22px color-mix(in srgb, var(--glow) 55%, transparent);
-  transition:opacity .5s, transform .12s, background .3s;
-}
-#gyroBtn:active{ transform:scale(.96); }
-#gyroBtn.on{ background:#fff; color:#180A28; }
-#gyroBtn.fade{ opacity:0; pointer-events:none; height:0; padding:0; margin:0; }
-
-@media (hover:hover) and (pointer:fine){ #gyroBtn{ display:none; } }
-
 @media (min-width:900px){
   #ui{ padding:34px 40px; }
   #logo{ width:224px; }

@@ -120,7 +120,7 @@ function init(){
   computeGrid();
 
   bindPointer(out);
-  setupGyroButton();
+  setupGyro();
   window.addEventListener('resize', onResize);
   renderer.setAnimationLoop(animate);
 }
@@ -293,23 +293,32 @@ function bindPointer(el){
   el.addEventListener('pointercancel', ()=>{ pDown = false; });
 }
 
-// ---------- giroscópio ----------
-function setupGyroButton(){
-  const btn = document.getElementById('gyroBtn');
-  if(typeof DeviceOrientationEvent === 'undefined'){ btn.style.display = 'none'; return; }
-  btn.addEventListener('click', async (e)=>{
-    e.stopPropagation();
+// ---------- giroscópio (SEM botão — automático onde dá, 1º toque no iOS) ----------
+let gyroArmed = false;
+function setupGyro(){
+  if(typeof DeviceOrientationEvent === 'undefined') return;               // desktop → rato
+  const needsPerm = typeof DeviceOrientationEvent.requestPermission === 'function';
+  if(!needsPerm){                                                          // Android/Chrome → automático já
+    window.addEventListener('deviceorientation', onOrient);
+    gyroOn = true;
+    return;
+  }
+  // iOS 13+ exige 1 gesto do utilizador (regra da Apple, não dá 100% auto).
+  // Ativa no PRIMEIRO toque em qualquer sítio da página — sem botão.
+  const arm = async ()=>{
+    if(gyroArmed) return; gyroArmed = true;
     try{
-      if(typeof DeviceOrientationEvent.requestPermission === 'function'){
-        const s = await DeviceOrientationEvent.requestPermission();
-        if(s !== 'granted'){ btn.textContent = 'permissão negada'; return; }
-      }
-      window.addEventListener('deviceorientation', onOrient);
-      gyroOn = true;
-      btn.textContent = '● movimento ativo'; btn.classList.add('on');
-      setTimeout(()=> btn.classList.add('fade'), 1800);
-    }catch(_){ btn.textContent = 'indisponível'; }
-  });
+      const s = await DeviceOrientationEvent.requestPermission();
+      if(s === 'granted'){ window.addEventListener('deviceorientation', onOrient); gyroOn = true; }
+      else gyroArmed = false;                                             // negou → deixa tentar de novo
+    }catch(_){ gyroArmed = false; }
+    if(gyroOn){
+      window.removeEventListener('pointerdown', arm);
+      window.removeEventListener('touchend', arm);
+    }
+  };
+  window.addEventListener('pointerdown', arm);
+  window.addEventListener('touchend', arm);
 }
 function onOrient(e){
   if(e.beta == null || e.gamma == null) return;
