@@ -296,11 +296,10 @@ function bindPointer(el){
 // ---------- giroscópio (SEM botão — automático onde dá, 1º toque no iOS) ----------
 let gyroArmed = false;
 function setupGyro(){
-  if(typeof DeviceOrientationEvent === 'undefined') return;               // desktop → rato
+  if(typeof DeviceOrientationEvent === 'undefined') return;               // sem API → rato
   const needsPerm = typeof DeviceOrientationEvent.requestPermission === 'function';
-  if(!needsPerm){                                                          // Android/Chrome → automático já
-    window.addEventListener('deviceorientation', onOrient);
-    gyroOn = true;
+  if(!needsPerm){                                                          // Android → liga já; gyroOn só flipa no 1º evento REAL
+    window.addEventListener('deviceorientation', onOrient);               // (desktop tb entra aqui, mas nunca dispara → fica no rato)
     return;
   }
   // iOS 13+ exige 1 gesto do utilizador (regra da Apple, não dá 100% auto).
@@ -309,19 +308,19 @@ function setupGyro(){
     if(gyroArmed) return; gyroArmed = true;
     try{
       const s = await DeviceOrientationEvent.requestPermission();
-      if(s === 'granted'){ window.addEventListener('deviceorientation', onOrient); gyroOn = true; }
-      else gyroArmed = false;                                             // negou → deixa tentar de novo
+      if(s === 'granted'){
+        window.addEventListener('deviceorientation', onOrient);
+        window.removeEventListener('pointerdown', arm);
+        window.removeEventListener('touchend', arm);
+      } else { gyroArmed = false; }                                       // negou → deixa tentar de novo
     }catch(_){ gyroArmed = false; }
-    if(gyroOn){
-      window.removeEventListener('pointerdown', arm);
-      window.removeEventListener('touchend', arm);
-    }
   };
   window.addEventListener('pointerdown', arm);
   window.addEventListener('touchend', arm);
 }
 function onOrient(e){
   if(e.beta == null || e.gamma == null) return;
+  gyroOn = true;                                                          // só liga com dado REAL → desktop nunca liga (rato preservado)
   if(baseBeta == null){ baseBeta = e.beta; baseGamma = e.gamma; }
   gyroRX = clamp((e.beta  - baseBeta ) / 42, -1, 1) * 0.16;
   gyroRY = clamp((e.gamma - baseGamma) / 42, -1, 1) * 0.27;
