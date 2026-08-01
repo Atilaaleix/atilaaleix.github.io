@@ -121,6 +121,21 @@ body.ready #boot{ opacity:0; pointer-events:none; }
 
 .hint{ font-family:"BlinkMac",sans-serif; font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; opacity:.5; text-align:center; }
 
+/* botão explícito do giroscópio (só telemóvel) — mesma tarja da tagline */
+#gyro-btn{
+  pointer-events:auto; cursor:pointer;
+  font-family:"BlinkMac", sans-serif; font-weight:700;
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--lite);
+  padding:11px 22px; border-radius:100px;
+  background:color-mix(in srgb, var(--bg) 62%, transparent);
+  border:1px solid color-mix(in srgb, var(--glow) 55%, transparent);
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+  backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+}
+#gyro-btn:active{ transform:scale(.97); background:color-mix(in srgb, var(--glow) 30%, var(--bg)); }
+#gyro-btn[hidden]{ display:none; }
+
 @media (min-width:900px){
   #ui{ padding:34px 40px; }
   #logo{ width:224px; }

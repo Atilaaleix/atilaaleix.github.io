@@ -293,30 +293,28 @@ function bindPointer(el){
   el.addEventListener('pointercancel', ()=>{ pDown = false; });
 }
 
-// ---------- giroscópio (SEM botão — automático onde dá, 1º toque no iOS) ----------
+// ---------- giroscópio (botão explícito no telemóvel — intuitivo) ----------
 let gyroArmed = false;
 function setupGyro(){
   if(typeof DeviceOrientationEvent === 'undefined') return;               // sem API → rato
-  const needsPerm = typeof DeviceOrientationEvent.requestPermission === 'function';
-  if(!needsPerm){                                                          // Android → liga já; gyroOn só flipa no 1º evento REAL
-    window.addEventListener('deviceorientation', onOrient);               // (desktop tb entra aqui, mas nunca dispara → fica no rato)
-    return;
-  }
-  // iOS 13+ exige 1 gesto do utilizador (regra da Apple, não dá 100% auto).
-  // Ativa no PRIMEIRO toque em qualquer sítio da página — sem botão.
-  const arm = async ()=>{
+  const btn = document.getElementById('gyro-btn');
+  const isMobile = (navigator.maxTouchPoints || 0) > 0 &&
+                   window.matchMedia('(pointer: coarse)').matches;        // coarse = telemóvel/tablet; desktop nunca mostra
+  if(!isMobile || !btn) return;                                           // desktop → rato, sem botão
+  const needsPerm = typeof DeviceOrientationEvent.requestPermission === 'function'; // iOS 13+
+  btn.hidden = false;
+  btn.addEventListener('click', async ()=>{
     if(gyroArmed) return; gyroArmed = true;
     try{
-      const s = await DeviceOrientationEvent.requestPermission();
-      if(s === 'granted'){
-        window.addEventListener('deviceorientation', onOrient);
-        window.removeEventListener('pointerdown', arm);
-        window.removeEventListener('touchend', arm);
-      } else { gyroArmed = false; }                                       // negou → deixa tentar de novo
+      if(needsPerm){                                                      // iOS: exige gesto (regra da Apple) → o botão É o gesto
+        const s = await DeviceOrientationEvent.requestPermission();
+        if(s !== 'granted'){ gyroArmed = false; return; }                 // negou → botão fica, pode tentar de novo
+      }
+      baseBeta = null; baseGamma = null;                                  // recalibra na posição atual do aparelho
+      window.addEventListener('deviceorientation', onOrient);
+      btn.hidden = true;
     }catch(_){ gyroArmed = false; }
-  };
-  window.addEventListener('pointerdown', arm);
-  window.addEventListener('touchend', arm);
+  });
 }
 function onOrient(e){
   if(e.beta == null || e.gamma == null) return;
