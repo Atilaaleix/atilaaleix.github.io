@@ -1,0 +1,143 @@
+@font-face{
+  font-family:"BlinkMac";
+  src:url("assets/blinkmac-bold.otf") format("opentype");
+  font-weight:400 900; font-display:swap;
+}
+
+:root{ --bg:#0C0614; --glow:#B98BFF; --lite:#EBD8FF; }
+*{ margin:0; padding:0; box-sizing:border-box; }
+html,body{ height:100%; width:100%; overflow:hidden; background:var(--bg); }
+body{
+  font-family:"BlinkMac", ui-sans-serif, system-ui, sans-serif;
+  color:var(--lite);
+  -webkit-tap-highlight-color:transparent;
+  overscroll-behavior:none; touch-action:none;
+  transition:background .5s ease;
+}
+
+/* ---------- camada ASCII 3D (canvas) ---------- */
+#ascii-canvas{
+  position:fixed; inset:0; z-index:1;
+  width:100%; height:100%;
+  cursor:grab; touch-action:none;
+}
+#ascii-canvas:active{ cursor:grabbing; }
+
+/* ---------- scrim (funde ASCII no fundo → topo/base legíveis) ---------- */
+#scrim{
+  position:fixed; inset:0; z-index:3; pointer-events:none;
+  background:
+    linear-gradient(to bottom,
+      var(--bg) 4%,
+      color-mix(in srgb, var(--bg) 40%, transparent) 14%,
+      transparent 26%),
+    linear-gradient(to top,
+      var(--bg) 27%,
+      color-mix(in srgb, var(--bg) 55%, transparent) 44%,
+      transparent 60%);
+}
+
+/* ---------- grão + vinheta ---------- */
+#fx{
+  position:fixed; inset:0; z-index:2; pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px),
+    radial-gradient(125% 92% at 50% 42%, transparent 56%, rgba(0,0,0,.5) 100%);
+  mix-blend-mode:multiply; opacity:.55;
+}
+
+/* ---------- boot ---------- */
+#boot{
+  position:fixed; inset:0; z-index:5; display:flex; align-items:center; justify-content:center;
+  gap:.5ch; font-size:13px; letter-spacing:.12em; color:var(--glow);
+  background:var(--bg); transition:opacity .6s ease; text-transform:uppercase;
+}
+.cur{ animation:blink 1s steps(1) infinite; }
+@keyframes blink{ 50%{ opacity:0; } }
+body.ready #boot{ opacity:0; pointer-events:none; }
+
+/* ---------- UI ---------- */
+#ui{
+  position:fixed; inset:0; z-index:4; pointer-events:none;
+  display:flex; flex-direction:column; justify-content:space-between; align-items:center;
+  padding:calc(env(safe-area-inset-top) + 24px) 22px calc(env(safe-area-inset-bottom) + 24px);
+}
+
+/* topo: logo real centralizada + frase numa tarja legível (não ocupa a cabeça) */
+#top{ display:flex; flex-direction:column; align-items:center; gap:12px; width:100%; }
+#logo{
+  display:block; width:min(52vw, 196px); height:auto;
+  filter:drop-shadow(0 2px 16px rgba(0,0,0,.72));
+}
+.tagline{
+  font-family:"BlinkMac", sans-serif; font-weight:700;
+  font-size:clamp(7.4px, 2.35vw, 12px); letter-spacing:.08em; line-height:1;
+  text-transform:uppercase; white-space:nowrap; color:var(--lite);
+  padding:8px 16px; border-radius:100px;
+  background:color-mix(in srgb, var(--bg) 62%, transparent);
+  border:1px solid color-mix(in srgb, var(--glow) 45%, transparent);
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+  backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+  text-align:center;
+}
+
+/* base: botões + hint */
+#bottom{ display:flex; flex-direction:column; align-items:center; gap:15px; width:100%; }
+
+.links{
+  display:flex; flex-direction:column; gap:11px;
+  width:100%; max-width:330px; margin:0 auto; pointer-events:auto;
+}
+/* pill 100% redondo, fundo branco; fill roxo sobe no toque/hover; anel roxo vivo */
+.lnk{
+  position:relative; overflow:hidden; isolation:isolate;
+  display:flex; align-items:center; justify-content:center;
+  text-decoration:none; text-align:center;
+  font-family:"BlinkMac", sans-serif; font-weight:700;
+  font-size:13.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:#180A28; background:#fff;
+  border-radius:100px; padding:15px 22px;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+  transition:color .3s ease, transform .12s ease;
+}
+.lnk::before{
+  content:""; position:absolute; inset:0; z-index:-1;
+  background:linear-gradient(115deg, var(--glow) 0%, color-mix(in srgb, var(--glow) 40%, #4b1d86) 100%);
+  transform:translateY(102%);
+  transition:transform .42s cubic-bezier(.35,0,.2,1);
+}
+.lnk::after{
+  content:""; position:absolute; inset:0; z-index:1; border-radius:100px;
+  padding:2px; pointer-events:none;
+  background:linear-gradient(115deg, var(--glow), color-mix(in srgb, var(--glow) 30%, #2a0f4d), var(--glow));
+  background-size:220% 100%;
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  animation:ring 3.8s linear infinite; opacity:.85;
+}
+@keyframes ring{ 0%{ background-position:0% 0; } 100%{ background-position:220% 0; } }
+.lnk:hover, .lnk:active{ color:#fff; transform:translateY(-1px); }
+.lnk:hover::before, .lnk:active::before{ transform:translateY(0); }
+
+.hint{ font-family:"BlinkMac",sans-serif; font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; opacity:.5; text-align:center; }
+
+#gyroBtn{
+  pointer-events:auto; cursor:pointer;
+  font-family:"BlinkMac", sans-serif; font-size:11px; font-weight:700;
+  color:var(--bg); background:var(--glow); border:0; border-radius:100px;
+  padding:11px 20px; letter-spacing:.14em; text-transform:uppercase;
+  box-shadow:0 6px 22px color-mix(in srgb, var(--glow) 55%, transparent);
+  transition:opacity .5s, transform .12s, background .3s;
+}
+#gyroBtn:active{ transform:scale(.96); }
+#gyroBtn.on{ background:#fff; color:#180A28; }
+#gyroBtn.fade{ opacity:0; pointer-events:none; height:0; padding:0; margin:0; }
+
+@media (hover:hover) and (pointer:fine){ #gyroBtn{ display:none; } }
+
+@media (min-width:900px){
+  #ui{ padding:34px 40px; }
+  #logo{ width:224px; }
+  .tagline{ font-size:12px; }
+  .links{ max-width:350px; }
+}

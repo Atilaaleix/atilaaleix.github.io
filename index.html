@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0C0614" />
+<title>alternate. — Átila Aleixo</title>
+<link rel="stylesheet" href="style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/addons/": "./vendor/addons/"
+  }
+}
+</script>
+</head>
+<body>
+  <!-- camada ASCII 3D (canvas próprio — recebe drag/gyro/tap) -->
+  <canvas id="ascii-canvas"></canvas>
+
+  <!-- scrim: funde o ASCII no fundo → topo (frase) e base (links) legíveis -->
+  <div id="scrim"></div>
+
+  <!-- grão + scanlines terminal -->
+  <div id="fx"></div>
+
+  <!-- boot -->
+  <div id="boot"><span class="cur">█</span> a inicializar realidade…</div>
+
+  <!-- UI link-tree -->
+  <div id="ui">
+    <header id="top">
+      <img id="logo" src="assets/wordmark.png" alt="alternate." />
+      <div class="tagline">A REALIDADE ALTERNATIVA ESTÁ A OLHAR DE VOLTA</div>
+    </header>
+
+    <footer id="bottom">
+      <button id="gyroBtn" type="button">▶ ATIVAR MOVIMENTO</button>
+
+      <nav class="links">
+        <a class="lnk" href="https://alternatestudio.com.br" target="_blank" rel="noopener">VISITAR O SITE</a>
+        <a class="lnk" href="https://www.linkedin.com/in/atila-aleixo" target="_blank" rel="noopener">O NOSSO LINKEDIN</a>
+        <a class="lnk" href="https://wa.me/351932692528" target="_blank" rel="noopener">ENTRAR EM CONTACTO</a>
+      </nav>
+
+      <div class="hint">MEXE O TELEMÓVEL · TOCA PARA MUDAR A COR</div>
+    </footer>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
