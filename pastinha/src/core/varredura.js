@@ -47,6 +47,7 @@ const GENERICA = new Set([
  * @property {Array<{caminho:string, soltos:number}>} focosDeBagunca
  * @property {number} segundos
  * @property {boolean} truncada
+ * @property {string[]} atalhosSeguidos
  * @property {string[]} raizes
  * @property {{downloads:string,desktop:string,documents:string,home:string}} pastasDoUsuario
  */
@@ -74,6 +75,11 @@ export function varrer({
   const candidatasInstancia = [];
   /** @type {Array<{caminho:string, soltos:number}>} */
   const focosDeBagunca = [];
+
+  /** Caminhos reais ja visitados: atalho pode apontar para onde ja estivemos. */
+  const visitados = new Set();
+  /** Atalhos que a gente seguiu, para poder contar isso na tela. */
+  const atalhosSeguidos = [];
 
   let arquivos = 0, pastas = 0, bytes = 0, truncada = false;
   const t0 = Date.now();
@@ -103,9 +109,29 @@ export function varrer({
       if (e.name.startsWith('.')) continue;
       const cheio = path.join(dir, e.name);
 
-      if (e.isSymbolicLink()) continue;
+      // O iCloud, quando liga "Pastas Mesa e Documentos", troca ~/Desktop e
+      // ~/Documents por ATALHOS para dentro de ~/Library. Pular todo atalho
+      // deixava a varredura cega exatamente para as duas pastas que mais
+      // importam — e o passo seguinte, que nao pula, listava os arquivos
+      // normalmente. O mesmo programa se contradizia na mesma execucao.
+      //
+      // So no primeiro andar, e so para pasta: atalho fundo e emaranhado, e
+      // seguir todos e o caminho mais curto para um laco infinito.
+      let ehPasta = e.isDirectory();
+      if (e.isSymbolicLink()) {
+        if (profundidade > 0) continue;
+        let alvo;
+        try {
+          alvo = fs.realpathSync(cheio);
+          if (!fs.statSync(cheio).isDirectory()) continue;
+        } catch { continue; }
+        if (visitados.has(alvo)) continue;
+        visitados.add(alvo);
+        ehPasta = true;
+        atalhosSeguidos.push(e.name);
+      }
 
-      if (e.isDirectory()) {
+      if (ehPasta) {
         // Pacote conta como um arquivo so, e a gente nao entra.
         if (PACOTE.test(e.name)) {
           arquivos++; soltosAqui++;
@@ -179,6 +205,7 @@ export function varrer({
     focosDeBagunca: focosDeBagunca.slice(0, 12),
     segundos: +((Date.now() - t0) / 1000).toFixed(1),
     truncada,
+    atalhosSeguidos,
     raizes: alvos,
     pastasDoUsuario,
   };
@@ -214,9 +241,14 @@ export function diagnostico(inv) {
     linhas.push(`a pasta mais bagunçada é ${f.caminho} com ${f.soltos} arquivos soltos`);
   }
 
+  if (inv.atalhosSeguidos && inv.atalhosSeguidos.length) {
+    linhas.push(`${inv.atalhosSeguidos.join(' e ')} ${inv.atalhosSeguidos.length > 1 ? 'estão' : 'está'} no iCloud — entrei mesmo assim`);
+  }
+
   if (inv.candidatasInstancia.length) {
     const nomes = inv.candidatasInstancia.slice(0, 5).map(c => path.basename(c.caminho));
-    linhas.push(`achei ${inv.candidatasInstancia.length} pastas que parecem projeto ou cliente: ${nomes.join(', ')}` +
+    const q = inv.candidatasInstancia.length;
+    linhas.push(`achei ${q} ${q === 1 ? 'pasta que parece' : 'pastas que parecem'} projeto ou cliente: ${nomes.join(', ')}` +
       (inv.candidatasInstancia.length > 5 ? '…' : ''));
   }
 

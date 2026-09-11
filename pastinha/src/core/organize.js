@@ -388,12 +388,21 @@ export function apply(proposal, cfg, { dryRun = false } = {}) {
     pending: true
   });
 
+  if (/[{}]/.test(String(proposal.folder))) {
+    // Um espaco que ninguem preencheu viraria uma pasta chamada "{ano}" ou
+    // "{projeto}" dentro do acervo da pessoa. Melhor recusar e perguntar.
+    throw new Error(`destino ainda tem espaço em aberto: ${proposal.folder}`);
+  }
+
   try {
     fs.renameSync(proposal.file, to);
     // Os acompanhantes vao atras, com o mesmo nome novo e a extensao deles.
     for (const amigo of (proposal.acompanhantes || [])) {
       try {
-        const destino = path.join(destDir, path.basename(to, path.extname(to)) + path.extname(amigo));
+        // collisionFreePath aqui nao e zelo: sem ele, dois .xmp que caem no
+        // mesmo nome se sobrescrevem e o segundo some para sempre.
+        const destino = collisionFreePath(
+          destDir, path.basename(to, path.extname(to)) + path.extname(amigo));
         fs.renameSync(amigo, destino);
         journal.append({ op: 'move', from: amigo, to: destino, fromName: path.basename(amigo),
                          toName: path.basename(destino), category: proposal.folder,
@@ -420,7 +429,13 @@ export function undo(n = 1) {
   const results = [];
   for (const m of moves) {
     try {
-      if (!fs.existsSync(m.to)) { results.push({ ...m, ok: false, why: 'não está mais lá' }); continue; }
+      if (!fs.existsSync(m.to)) {
+        // Sem registrar, este movimento continua sendo o "proximo a desfazer"
+        // para sempre, e o undo nunca passa dele.
+        journal.append({ op: 'undo', of: m.id, from: m.to, to: null, falhou: 'sumiu' });
+        results.push({ ...m, ok: false, why: 'não está mais lá' });
+        continue;
+      }
       fs.mkdirSync(path.dirname(m.from), { recursive: true });
       const back = fs.existsSync(m.from) ? collisionFreePath(path.dirname(m.from), path.basename(m.from)) : m.from;
       fs.renameSync(m.to, back);
@@ -435,8 +450,15 @@ export function undo(n = 1) {
 
 /** Tudo o que foi movido hoje, de volta. */
 export function undoToday() {
-  const today = new Date().toISOString().slice(0, 10);
-  const n = journal.undoableMoves().filter(m => (m.ts || '').startsWith(today)).length;
+  // O diario grava em UTC, mas "hoje" e o dia de quem esta na frente da tela.
+  // No Brasil, depois das 21h o dia UTC ja virou: comparar as duas datas em
+  // texto fazia o undo --today nao achar nada do proprio dia.
+  const diaLocal = (d) => {
+    const x = new Date(d);
+    return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+  };
+  const hoje = diaLocal(new Date());
+  const n = journal.undoableMoves().filter(m => m.ts && diaLocal(m.ts) === hoje).length;
   return undo(n);
 }
 

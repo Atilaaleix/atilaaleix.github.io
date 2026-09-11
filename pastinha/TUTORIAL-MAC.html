@@ -308,8 +308,9 @@ tr:last-child td{border-bottom:0}
   <p>Os <strong>{chaves}</strong> são os espaços que ele ainda não sabe preencher, e a porcentagem é a confiança. Abaixo de 85% ele pergunta em vez de agir.</p>
 
   <div class="aviso pa">
-    <div class="r">Importante antes do passo 4</div>
-    <p>O comando <code>sandbox</code> <strong>aponta a configuração para a caixa de areia</strong>. Para voltar aos seus arquivos de verdade, rode <code>node cli.js live</code>. Se pular isso, o passo 4 vai continuar mexendo na bagunça de mentira.</p>
+    <div class="r">Uma correção importante sobre a caixa de areia</div>
+    <p>A caixa de areia protege os comandos <code>scan</code>, <code>bench</code> e <code>find</code> — só esses. O <code>comecar</code> <strong>não</strong> fica na caixa de areia: ele monta uma configuração nova a partir das suas respostas e vai direto para os seus arquivos de verdade.</p>
+    <p>Você não precisa rodar <code>live</code> antes do passo 4 — e o programa agora te avisa na tela quando está saindo da caixa. Rode <code>live</code> quando quiser voltar ao normal sem passar pelo <code>comecar</code>.</p>
   </div>
 </section>
 
@@ -322,8 +323,7 @@ tr:last-child td{border-bottom:0}
     </div>
   </div>
 
-  <div class="term"><span class="p">$</span> <b>node cli.js live</b>      <span class="c"># volta para os seus arquivos (se você fez o passo 3)</span>
-<span class="p">$</span> <b>node cli.js comecar</b></div>
+  <div class="term"><span class="p">$</span> <b>node cli.js comecar</b></div>
 
   <p>Ele faz isso, nesta ordem:</p>
 
@@ -343,7 +343,8 @@ tr:last-child td{border-bottom:0}
 
   <div class="aviso at">
     <div class="r">A única pergunta em que eu mudaria o padrão</div>
-    <p>Na <strong>pergunta 8</strong> o padrão é <em>"pergunta sempre"</em>. É o mais seguro, mas com ele você vê pouca coisa se mexer sozinha.</p>
+    <p>Na <strong>última pergunta</strong> — <em>"No começo, eu movo sozinho ou pergunto sempre?"</em> — o padrão é <em>"pergunta sempre"</em>. É o mais seguro, mas com ele você vê pouca coisa se mexer sozinha.</p>
+    <p class="dim" style="font-size:15px;color:var(--muted)">São 7 perguntas se ele te identificar como "pessoa comum" e 8 se identificar uma profissão criativa — por isso vou pelo nome, não pelo número.</p>
     <p>Para a demonstração ficar interessante, escolha a <strong>opção 2 — "move sozinho só o óbvio"</strong>. Ele passa a guardar sozinho instalador, fonte, captura de tela e boleto, e continua perguntando em tudo que envolve projeto ou cliente.</p>
   </div>
 
@@ -446,6 +447,13 @@ tr:last-child td{border-bottom:0}
   <div class="term"><span class="p">$</span> <b>node cli.js undo</b>           <span class="c"># desfaz o último movimento</span>
 <span class="p">$</span> <b>node cli.js undo --today</b>   <span class="c"># desfaz tudo que ele fez hoje</span></div>
 
+  <div class="aviso ok">
+    <div class="r">Três coisas que eu consertei hoje testando isto</div>
+    <p><strong>Ctrl+C agora cancela.</strong> Antes ele fechava a entrada, o programa entendia "acabou", respondia tudo com os padrões e movia os arquivos — o oposto do que você pediu.</p>
+    <p><strong>Responder "não" agora é não.</strong> Só <code>n</code> exato era entendido; "nao" e "não" eram lidos como sim.</p>
+    <p><strong>O <code>undo</code> não trava mais.</strong> Se o primeiro movimento da fila não pudesse voltar, ele ficava preso nesse mesmo movimento para sempre. E o <code>--today</code> usava a data de Londres: depois das 21h aqui ele não achava nada do próprio dia.</p>
+  </div>
+
   <p>Os arquivos voltam para a pasta original <strong>com o nome original</strong>, acento e cedilha inclusive. Eu verifiquei: 4 arquivos movidos, 4 voltaram idênticos, e a pasta de destino ficou vazia.</p>
 
   <h4>Para remover a Pastinha do Mac</h4>
@@ -483,8 +491,8 @@ tr:last-child td{border-bottom:0}
       <p>Ela para em 120 segundos. Num Mac com biblioteca de Fotos grande ela vai bater o limite e avisar. Truncada ela ainda funciona, só com diagnóstico mais pobre.</p>
     </div>
     <div class="cartao aviso-cor">
-      <div class="t">iCloud pode atrapalhar</div>
-      <p>Se sua Área de Trabalho e Documentos estão no iCloud, pode haver arquivo que está só na nuvem. Ele lê nome e data normalmente, mas o diagnóstico fica incompleto.</p>
+      <div class="t">iCloud: consertado hoje</div>
+      <p>Quando o iCloud liga "Pastas Mesa e Documentos", o macOS troca essas duas pastas por atalhos — e a varredura pulava atalho. Sua Mesa inteira ficava invisível no passo 1 e aparecia no passo 4. Agora ele entra e escreve na tela <em>"Desktop e Documents estão no iCloud — entrei mesmo assim"</em>.</p>
     </div>
     <div class="cartao aviso-cor">
       <div class="t">Disco externo não entra</div>

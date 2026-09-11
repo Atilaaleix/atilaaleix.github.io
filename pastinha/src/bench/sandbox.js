@@ -100,7 +100,22 @@ function write(full, body) {
  */
 export function buildSandbox(root) {
   const base = root || path.join(DATA_DIR, 'sandbox');
-  fs.rmSync(base, { recursive: true, force: true });
+
+  // Apagar recursivamente uma pasta que veio de --root e a unica linha deste
+  // projeto capaz de destruir arquivo de verdade. So se apaga o que esta
+  // marcado como caixa de areia; o resto e recusado com o motivo na tela.
+  const marca = path.join(base, '.caixa-de-areia');
+  if (fs.existsSync(base)) {
+    const nossa = fs.existsSync(marca) || base === path.join(DATA_DIR, 'sandbox');
+    if (!nossa) {
+      throw new Error(
+        `${base} ja existe e nao foi criada por mim — nao vou apagar.\n` +
+        `  Escolha uma pasta que nao existe, ou apague essa voce mesmo.`);
+    }
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+  fs.mkdirSync(base, { recursive: true });
+  fs.writeFileSync(marca, 'Pastinha: pasta descartavel. Pode apagar.\n');
 
   const entrada = path.join(base, 'Entrada');
   const documentos = path.join(base, 'Documentos');
@@ -110,6 +125,9 @@ export function buildSandbox(root) {
   for (const [name, body] of PROJETO) write(path.join(entrada, 'meu-site', name), body);
   for (const [rel, body] of DOCUMENTOS) write(path.join(documentos, rel), body);
   fs.mkdirSync(guardados, { recursive: true });
+  // Nota para quem for mexer aqui: 'comecar' NAO respeita esta configuracao.
+  // Ele monta uma config nova a partir das respostas e volta para os arquivos
+  // de verdade. Os comandos que ficam dentro da caixa sao scan, bench e find.
 
   return {
     base, entrada, documentos, guardados,
