@@ -38,6 +38,37 @@ Só Node 18 ou mais novo.
 
 ---
 
+## Teste em massa
+
+A caixa de areia de 26 arquivos serve para entender o produto. Não serve para medir.
+
+```bash
+node cli.js perfil                              # os 6 perfis
+node cli.js corpus --perfil fotografo --n 20000 # disco inteiro, com gabarito
+node cli.js bench --no-model --n 1500
+```
+
+20 mil arquivos em 3 segundos; 1500 classificados em 5 (~3 ms cada, sem modelo).
+
+Foi esse teste que achou o maior erro de arquitetura do projeto: as regras diziam
+`boleto → Financeiro/Contas`, misturando **o que o arquivo é** (universal) com
+**onde ele vai** (pessoal). Resultado: 100% num disco comum e 5,7% no de um
+fotógrafo. Separadas — `rules.js` devolve tipo, `placement.js` devolve pasta por
+perfil — a média foi de **38% para 87%**.
+
+| perfil | antes | depois |
+|---|---|---|
+| pessoa comum | 100% | 100% |
+| programador | 79,5% | 94,8% |
+| fotógrafo | 5,7% | 90,3% |
+| criador | 12,2% | 91,8% |
+| videomaker | 7,5% | 75,5% |
+| designer | 23% | 69,8% |
+
+O corpus é sintético e escrito pela mesma pessoa que escreveu as regras — é
+otimista por construção. Serve para achar erro de arquitetura, não para prever
+acurácia. **O número que vale sai do seu `~/Documents`.**
+
 ## O número que decide o projeto
 
 Você não precisa rotular nada à mão. Você **já tem** um conjunto rotulado: todo

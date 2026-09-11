@@ -84,7 +84,7 @@ export function gatherContext(file, cfg) {
  * @param {string} file
  * @param {any} cfg
  * @param {any[]} taxonomy
- * @param {{noModel?:boolean, forceModel?:boolean, aprendido?:Record<string,string>}} [opts]
+ * @param {{noModel?:boolean, forceModel?:boolean, aprendido?:Record<string,string>, semPerfil?:boolean}} [opts]
  * @returns {Promise<any>}
  */
 export async function propose(file, cfg, taxonomy, opts = {}) {
@@ -142,7 +142,8 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
     const posto = colocar(ruled.tipo, {
       perfil: cfg.perfil || 'geral',
       aprendido: opts.aprendido || {},
-      ano
+      ano,
+      semPerfil: !!opts.semPerfil
     });
 
     proposal.tipo = ruled.tipo;

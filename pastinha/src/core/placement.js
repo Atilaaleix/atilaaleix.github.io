@@ -108,17 +108,19 @@ export function slotsDe(folder) {
 
 /**
  * @param {string} tipo
- * @param {{perfil?:string, aprendido?:Record<string,string>, ano?:number|null}} ctx
+ * @param {{perfil?:string, aprendido?:Record<string,string>, ano?:number|null, semPerfil?:boolean}} ctx
  * @returns {Colocacao}
  */
-export function colocar(tipo, { perfil = 'geral', aprendido = {}, ano = null } = {}) {
+export function colocar(tipo, { perfil = 'geral', aprendido = {}, ano = null, semPerfil = false } = {}) {
   let folder = null, via = 'generico', confidence = 0.7;
 
   // 1. O que o usuário JÁ faz com este tipo vence qualquer proposta nossa.
   if (aprendido[tipo]) {
     folder = aprendido[tipo]; via = 'aprendido'; confidence = 0.95;
   } else {
-    const doPerfil = POR_PERFIL[perfil]?.[tipo];
+    // semPerfil existe só para o A/B do bench: simula o comportamento antigo,
+    // uma taxonomia única para todo mundo.
+    const doPerfil = semPerfil ? null : POR_PERFIL[perfil]?.[tipo];
     if (doPerfil) { folder = doPerfil; via = `perfil:${perfil}`; confidence = 0.85; }
     else if (GENERICO[tipo]) { folder = GENERICO[tipo]; via = 'generico'; confidence = 0.7; }
   }

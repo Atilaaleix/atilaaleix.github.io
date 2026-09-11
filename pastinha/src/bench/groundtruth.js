@@ -44,9 +44,9 @@ const topLevel = p => (p || '').split('/')[0];
 
 /**
  * @param {any} cfg
- * @param {{root?:string|null, n?:number, noModel?:boolean, verbose?:boolean, perfil?:string|null}} [opts]
+ * @param {{root?:string|null, n?:number, noModel?:boolean, verbose?:boolean, perfil?:string|null, semPerfil?:boolean}} [opts]
  */
-export async function runBench(cfg, { root = null, n = 120, noModel = false, verbose = false, perfil = null } = {}) {
+export async function runBench(cfg, { root = null, n = 120, noModel = false, verbose = false, perfil = null, semPerfil = false } = {}) {
   if (perfil) cfg = { ...cfg, perfil };
   const reference = root || cfg.learnFrom.find(r => fs.existsSync(r));
   if (!reference || !fs.existsSync(reference)) {
@@ -71,7 +71,7 @@ export async function runBench(cfg, { root = null, n = 120, noModel = false, ver
     process.stdout.write(`\r  avaliando ${i + 1}/${set.length}  `);
     let p;
     try {
-      p = await propose(file, cfg, taxonomy, { noModel });
+      p = await propose(file, cfg, taxonomy, { noModel, semPerfil });
     } catch (e) {
       errors++; continue;
     }
