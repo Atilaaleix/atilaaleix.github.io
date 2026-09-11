@@ -1,0 +1,18 @@
+{
+  "name": "pastinha",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Um bicho de estimação com TOC de arrumação. Organiza, renomeia e acha seus arquivos. 100% local.",
+  "engines": { "node": ">=18" },
+  "bin": { "pastinha": "./cli.js" },
+  "scripts": {
+    "doctor": "node cli.js doctor",
+    "scan": "node cli.js scan",
+    "watch": "node cli.js watch",
+    "bench": "node cli.js bench",
+    "server": "node cli.js server",
+    "pet": "electron shell/main.js"
+  },
+  "devDependencies": {}
+}

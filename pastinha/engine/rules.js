@@ -1,0 +1,159 @@
+// O classificador determinístico. A aposta do projeto é que ISTO resolve
+// 70-80% dos arquivos sozinho. Cada regra é testável, explicável e instantânea.
+// Se uma regra acerta, o modelo nem é chamado.
+import path from 'node:path';
+
+/** Domínio de origem -> categoria. A tabela mais barata e mais eficaz do sistema. */
+const DOMAIN_MAP = [
+  [/(^|\.)gov\.br$|receita\.fazenda|nfe\.fazenda|detran|inss|esocial/i, 'Documentos/Governo'],
+  [/nubank|itau|bradesco|santander|bancodobrasil|bb\.com\.br|caixa\.gov|inter\.co|c6bank|btgpactual|xpi\.com|binance|mercadopago/i, 'Financeiro'],
+  [/figma\.com|sketch\.com|dribbble|behance|unsplash|pexels|freepik|fonts\.google/i, 'Design'],
+  [/github|gitlab|bitbucket|npmjs|pypi|stackoverflow|developer\.apple|docker/i, 'Codigo'],
+  [/arxiv|scholar\.google|sciencedirect|jstor|springer|nature\.com|pubmed|ieee/i, 'Leitura/Artigos'],
+  [/linkedin|glassdoor|gupy|catho|indeed/i, 'Carreira'],
+  [/youtube|vimeo|twitch|spotify|soundcloud/i, 'Midia'],
+  [/booking|airbnb|latam|gol\.com|azul|decolar|kayak|expedia|tam\b/i, 'Viagens'],
+  [/amazon|mercadolivre|shopee|aliexpress|magazineluiza|americanas|kabum/i, 'Compras'],
+  [/notion|docs\.google|drive\.google|dropbox|sharepoint|onedrive/i, 'Trabalho'],
+  [/whatsapp|web\.whatsapp/i, 'Recebidos/WhatsApp']
+];
+
+const EXT_MAP = [
+  [['.dmg', '.pkg', '.mpkg'], 'Instaladores', 0.97],
+  [['.ipa', '.apk'], 'Instaladores', 0.95],
+  [['.torrent'], 'Downloads/Torrents', 0.95],
+  [['.fig', '.sketch', '.xd', '.psd', '.ai', '.indd', '.afdesign', '.afphoto'], 'Design', 0.92],
+  [['.ttf', '.otf', '.woff', '.woff2'], 'Design/Fontes', 0.95],
+  [['.srt', '.vtt', '.ass'], 'Midia/Legendas', 0.93],
+  [['.epub', '.mobi', '.azw3'], 'Leitura/Livros', 0.95],
+  [['.mp3', '.wav', '.flac', '.aac', '.m4a', '.aiff'], 'Midia/Audio', 0.9],
+  [['.mp4', '.mov', '.mkv', '.avi', '.webm', '.m4v'], 'Midia/Video', 0.88],
+  [['.ics'], 'Documentos/Calendario', 0.9],
+  [['.sql', '.db', '.sqlite'], 'Codigo/Dados', 0.85],
+  [['.iso', '.img'], 'Instaladores/Imagens', 0.9],
+  [['.stl', '.obj', '.3mf', '.gcode'], 'Design/3D', 0.92]
+];
+
+/** Padrões de nome. Cobre PT e EN porque o Mac do usuário pode estar em qualquer um. */
+const NAME_RULES = [
+  { re: /^(screenshot|captura de tela|screen shot)/i, folder: 'Capturas', conf: 0.96, name: 'captura-de-tela' },
+  { re: /^(img|dsc|dscn|p\d{7}|gopro|pxl)[_-]?\d{3,}/i, folder: 'Fotos', conf: 0.9 },
+  { re: /^(whatsapp|whats)[ _-]?(image|video|audio|ptt)/i, folder: 'Recebidos/WhatsApp', conf: 0.94 },
+  { re: /\b(boleto|fatura|invoice|recibo|nota[ _-]?fiscal|nfe|danfe|comprovante)\b/i, folder: 'Financeiro/Contas', conf: 0.88 },
+  { re: /\b(extrato|statement|informe[ _-]?de[ _-]?rendimentos)\b/i, folder: 'Financeiro/Extratos', conf: 0.88 },
+  { re: /\b(contrato|contract|aditivo|distrato|procuracao)\b/i, folder: 'Juridico/Contratos', conf: 0.85 },
+  { re: /\b(curriculo|curr[íi]culo|resume|\bcv\b)\b/i, folder: 'Carreira', conf: 0.87 },
+  { re: /\b(passaporte|rg\b|cnh\b|certidao|certid[ãa]o|titulo[ _-]?de[ _-]?eleitor)\b/i, folder: 'Documentos/Pessoais', conf: 0.9 },
+  { re: /\b(ingresso|ticket|boarding|cart[ãa]o[ _-]?de[ _-]?embarque|reserva)\b/i, folder: 'Viagens', conf: 0.85 },
+  { re: /\b(apresentacao|apresenta[çc][ãa]o|deck|pitch)\b/i, folder: 'Trabalho/Apresentacoes', conf: 0.8 },
+  { re: /^(zoom|meet|teams)[_-]/i, folder: 'Trabalho/Reunioes', conf: 0.85 }
+];
+
+const MIME_FALLBACK = [
+  [/^image\//, 'Imagens', 0.6],
+  [/^video\//, 'Midia/Video', 0.7],
+  [/^audio\//, 'Midia/Audio', 0.7],
+  [/^application\/(zip|x-tar|gzip|x-7z|x-rar)/, 'Downloads/Arquivos', 0.55],
+  [/^text\//, 'Documentos/Texto', 0.5]
+];
+
+export function domainOf(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
+}
+
+/**
+ * ctx: { file, name, ext, mime, size, whereFroms[], meta }
+ * Devolve null quando nenhuma regra tem opinião — aí o Cérebro assume.
+ */
+export function classify(ctx) {
+  const { name, ext, mime, whereFroms = [], meta = {} } = ctx;
+
+  // Underscore conta como caractere de palavra, então \b nunca casa em
+  // "boleto_condominio". Nome de arquivo vive cheio de underscore, camelCase e
+  // acento — normaliza tudo para espaço antes de testar qualquer padrão.
+  const flat = name
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_.\-]+/g, ' ')
+    .trim();
+
+  // 1. Origem do download vence quase tudo: é fato, não inferência.
+  for (const url of whereFroms) {
+    const host = domainOf(url);
+    if (!host) continue;
+    for (const [re, folder] of DOMAIN_MAP) {
+      if (re.test(host)) {
+        return { folder, confidence: 0.9, decidedBy: `origem:${host}`,
+                 reason: `Veio de ${host}`, source: url };
+      }
+    }
+  }
+
+  // 2. Padrão de nome.
+  for (const r of NAME_RULES) {
+    if (r.re.test(flat) || r.re.test(name)) {
+      return { folder: r.folder, confidence: r.conf, decidedBy: `nome:${r.re.source.slice(0, 28)}`,
+               reason: `O nome bate com ${r.folder.toLowerCase()}`, nameHint: r.name,
+               source: whereFroms[0] || null };
+    }
+  }
+
+  // 3. Extensão inequívoca.
+  for (const [exts, folder, conf] of EXT_MAP) {
+    if (exts.includes(ext)) {
+      return { folder, confidence: conf, decidedBy: `ext:${ext}`,
+               reason: `${ext} é sempre ${folder.toLowerCase()}`, source: whereFroms[0] || null };
+    }
+  }
+
+  // 4. Foto de câmera de verdade (tem modelo de câmera no EXIF).
+  if (meta.AcquisitionModel && /^image\//.test(mime || '')) {
+    const year = (meta.ContentCreationDate || '').slice(0, 4);
+    return { folder: year ? `Fotos/${year}` : 'Fotos', confidence: 0.88, decidedBy: 'exif:camera',
+             reason: `Foto tirada com ${meta.AcquisitionModel}`, source: whereFroms[0] || null };
+  }
+
+  // 5. Chute por tipo real. Confiança baixa de propósito: vai virar pergunta.
+  for (const [re, folder, conf] of MIME_FALLBACK) {
+    if (re.test(mime || '')) {
+      return { folder, confidence: conf, decidedBy: `mime:${mime}`,
+               reason: `É ${mime}, mas não sei do que se trata`, source: whereFroms[0] || null };
+    }
+  }
+
+  return null;
+}
+
+/** Nome de arquivo previsível. O modelo só escreve o miolo; isto é código. */
+export function slugify(s, maxLen = 60) {
+  return (s || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, maxLen)
+    .replace(/-+$/g, '');
+}
+
+export function buildName({ date, slug, context, ext }) {
+  const d = date instanceof Date && !isNaN(date) ? date.toISOString().slice(0, 10) : null;
+  const ctx = context ? slugify(context, 24) : null;
+  return [d, slug, ctx].filter(Boolean).join('__') + ext;
+}
+
+/** Procura uma data DENTRO do conteúdo — a data do contrato vale mais que a do download. */
+export function dateFromText(text) {
+  if (!text) return null;
+  const br = text.match(/\b(\d{2})[\/.-](\d{2})[\/.-](\d{4})\b/);
+  if (br) {
+    const d = new Date(`${br[3]}-${br[2]}-${br[1]}T12:00:00Z`);
+    if (!isNaN(d) && d.getFullYear() > 1990 && d.getFullYear() < 2100) return d;
+  }
+  const iso = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+  if (iso) {
+    const d = new Date(`${iso[0]}T12:00:00Z`);
+    if (!isNaN(d) && d.getFullYear() > 1990 && d.getFullYear() < 2100) return d;
+  }
+  return null;
+}

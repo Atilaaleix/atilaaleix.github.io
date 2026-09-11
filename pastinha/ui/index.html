@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pastinha</title>
+<link rel="stylesheet" href="pet.css">
+</head>
+<body>
+<div id="app">
+  <header id="bar">
+    <div class="drag">
+      <span class="dot" id="pulse"></span>
+      <strong>Pastinha</strong>
+      <span class="muted" id="rootLabel"></span>
+    </div>
+    <button id="btnQuit" title="Fechar">×</button>
+  </header>
+
+  <section id="screen">
+    <div id="creature" data-mood="dormindo">
+      <div class="load"></div>
+      <div class="body">
+        <span class="antenna a1"></span><span class="antenna a2"></span>
+        <span class="eye e1"></span><span class="eye e2"></span>
+        <span class="mouth"></span>
+      </div>
+      <div class="shadow"></div>
+    </div>
+    <p id="says">…</p>
+  </section>
+
+  <div id="searchWrap">
+    <input id="search" type="search" placeholder="onde está…  (contrato do apartamento)" autocomplete="off">
+  </div>
+  <ul id="results" hidden></ul>
+
+  <section id="queueWrap">
+    <div class="secbar">
+      <span id="queueTitle">Propostas</span>
+      <div>
+        <button id="btnScan" class="ghost">procurar bagunça</button>
+        <button id="btnUndo" class="ghost" title="Desfazer o último movimento">desfazer</button>
+      </div>
+    </div>
+    <ul id="queue"></ul>
+    <p id="empty" class="muted">Nada solto no momento. Ele está dormindo.</p>
+  </section>
+
+  <footer id="stats"></footer>
+</div>
+<script src="pet.js"></script>
+</body>
+</html>
