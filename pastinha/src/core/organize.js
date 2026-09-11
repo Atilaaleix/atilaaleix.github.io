@@ -6,6 +6,8 @@ import path from 'node:path';
 import platform from '../platform/index.js';
 import { sniff } from '../platform/shared/magic.js';
 import { readExif } from '../platform/shared/exif.js';
+import { imageSize, shapeHint } from '../platform/shared/imgsize.js';
+import { colocar, aprenderMapa } from './placement.js';
 import * as journal from './journal.js';
 import * as brain from './brain.js';
 import { extract, isImage } from './extract.js';
@@ -48,6 +50,7 @@ export function isProjectArea(file, cfg) {
  * @property {string} ext @property {number} size @property {Date} mtime
  * @property {string|null} mime @property {string[]} whereFroms
  * @property {Date|null} downloadedAt
+ * @property {{hint:string,confidence:number,note:string}|null} shape
  * @property {{Make?:string,Model?:string,DateTimeOriginal?:Date,hasGPS?:boolean}} exif
  */
 
@@ -66,7 +69,10 @@ export function gatherContext(file, cfg) {
     mime,
     whereFroms: platform.whereFroms(file),
     downloadedAt: platform.downloadedDate(file),
-    exif: /^image\/jpe?g$/.test(mime || '') ? readExif(file) : {}
+    exif: /^image\/jpe?g$/.test(mime || '') ? readExif(file) : {},
+    // A forma da imagem é o sinal que sobra quando não há EXIF nem nome útil —
+    // e imagem sem os dois é o caso mais comum de todos.
+    shape: /^image\//.test(mime || '') ? shapeHint(imageSize(file), mime) : null
   };
 }
 
@@ -78,7 +84,7 @@ export function gatherContext(file, cfg) {
  * @param {string} file
  * @param {any} cfg
  * @param {any[]} taxonomy
- * @param {{noModel?:boolean, forceModel?:boolean}} [opts]
+ * @param {{noModel?:boolean, forceModel?:boolean, aprendido?:Record<string,string>}} [opts]
  * @returns {Promise<any>}
  */
 export async function propose(file, cfg, taxonomy, opts = {}) {
@@ -119,22 +125,48 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
   proposal.text = ex.text;
   proposal.extractedVia = ex.via;
 
-  // 4. Regras determinísticas decidem a pasta. Sempre primeiro — agora com o
-  // texto já em mãos, então elas também enxergam o conteúdo, não só o nome.
+  // 4. As regras dizem O QUE é. Sempre primeiro — agora com o texto já em mãos,
+  // então elas também enxergam o conteúdo, não só o nome.
   const ruled = rulesClassify({ ...ctx, text: proposal.text });
-  if (ruled && ruled.confidence >= 0.85 && !opts.forceModel) {
-    proposal.folder = ruled.folder;
-    proposal.confidence = ruled.confidence;
-    proposal.reason = ruled.reason;
-    proposal.decidedBy = ruled.decidedBy;
-    proposal.slug = ruled.nameHint || slugify(ctx.stem);
-    proposal.newName = buildName({
-      date: dateFromText(proposal.text) || ctx.downloadedAt || ctx.mtime,
-      slug: proposal.slug,
-      context: null,
-      ext: ctx.ext
+
+  if (ruled) {
+    // 4b. E o placement diz ONDE vai, segundo o perfil e o que o usuário já faz.
+    // Só conta como ano SABIDO o que veio do conteúdo: EXIF da foto ou data
+    // dentro do documento. mtime é quando o arquivo encostou neste disco, que
+    // para foto e vídeo não tem relação nenhuma com quando aquilo aconteceu.
+    const dataConhecida = ctx.exif?.DateTimeOriginal instanceof Date
+      ? ctx.exif.DateTimeOriginal
+      : dateFromText(proposal.text);
+    const ano = dataConhecida ? dataConhecida.getFullYear() : null;
+
+    const posto = colocar(ruled.tipo, {
+      perfil: cfg.perfil || 'geral',
+      aprendido: opts.aprendido || {},
+      ano
     });
-    return proposal;
+
+    proposal.tipo = ruled.tipo;
+    proposal.folder = posto.folder;
+    proposal.slots = posto.slots;
+    proposal.precisaInstancia = posto.precisaInstancia;
+    // A confiança final é a do elo mais fraco: saber o que é não adianta se não
+    // se sabe onde vai, e vice-versa.
+    proposal.confidence = Math.min(ruled.confidence, posto.confidence);
+    proposal.reason = posto.precisaInstancia
+      ? `${ruled.reason} — mas preciso saber qual ${posto.slots.join(' e ')}`
+      : ruled.reason;
+    proposal.decidedBy = `${ruled.decidedBy}+${posto.via}`;
+    proposal.slug = ruled.nameHint || slugify(ctx.stem);
+
+    if (proposal.confidence >= 0.8 && !opts.forceModel) {
+      proposal.newName = buildName({
+        date: dateFromText(proposal.text) || ctx.downloadedAt || ctx.mtime,
+        slug: proposal.slug,
+        context: null,
+        ext: ctx.ext
+      });
+      return proposal;
+    }
   }
 
   let visionDesc = null;
@@ -148,7 +180,7 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
   }
 
   // Busca de pasta: 6 candidatas, nunca as 200 do disco.
-  const query = [ctx.stem, proposal.text.slice(0, 300), ruled?.folder, visionDesc?.description]
+  const query = [ctx.stem, proposal.text.slice(0, 300), ruled?.tipo, proposal.folder, visionDesc?.description]
     .filter(Boolean).join(' ');
   const cands = candidates(taxonomy, query, 6).map(c => c.rel || c.name);
 
@@ -173,10 +205,10 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
 
   // O modelo falhou ou está desligado: cai para a regra fraca, ou para a triagem.
   if (!proposal.folder) {
-    proposal.folder = ruled?.folder || 'Triagem';
-    proposal.confidence = ruled ? Math.min(ruled.confidence, 0.5) : 0.2;
-    proposal.reason = ruled?.reason || 'Não consegui entender o que é isso';
-    proposal.decidedBy = ruled?.decidedBy || 'fallback:triagem';
+    proposal.folder = 'Triagem';
+    proposal.confidence = 0.2;
+    proposal.reason = 'Não consegui entender o que é isso';
+    proposal.decidedBy = 'fallback:triagem';
     proposal.slug = visionDesc?.slug || slugify(ctx.stem);
   }
 
@@ -221,6 +253,7 @@ export function apply(proposal, cfg, { dryRun = false } = {}) {
     hash: journal.sha1File(proposal.file),
     size: proposal.size,
     category: proposal.folder,
+    tipo: proposal.tipo,
     confidence: proposal.confidence,
     reason: proposal.reason,
     decidedBy: proposal.decidedBy,
@@ -284,6 +317,11 @@ export function listLoose(cfg) {
     }
   }
   return out;
+}
+
+/** O que ESTE usuário já faz com cada tipo. Vence qualquer preset. */
+export function loadAprendido(entradas) {
+  return aprenderMapa(entradas);
 }
 
 export function loadTaxonomy(cfg) {

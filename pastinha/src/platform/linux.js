@@ -6,6 +6,30 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+/** @type {Map<string, Record<string,string>|null>} */
+const manifestCache = new Map();
+
+function originsFromManifest(file) {
+  let dir = path.dirname(path.resolve(file));
+  for (let up = 0; up < 5; up++) {
+    if (!manifestCache.has(dir)) {
+      const candidate = path.join(dir, '.pastinha-origins.json');
+      try { manifestCache.set(dir, JSON.parse(fs.readFileSync(candidate, 'utf8'))); }
+      catch { manifestCache.set(dir, null); }
+    }
+    const m = manifestCache.get(dir);
+    if (m) {
+      const rel = path.relative(dir, path.resolve(file));
+      const url = m[rel];
+      return url ? [url] : [];
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return [];
+}
+
 function run(cmd, args, { timeout = 8000 } = {}) {
   try {
     return execFileSync(cmd, args, { timeout, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
@@ -20,7 +44,13 @@ export default {
   whereFroms(file) {
     // O padrão freedesktop guarda a origem num xattr de usuário.
     const out = run('getfattr', ['-n', 'user.xdg.origin.url', '--only-values', file]);
-    return out && out.startsWith('http') ? [out.trim()] : [];
+    if (out && out.startsWith('http')) return [out.trim()];
+
+    // ANDAIME DE TESTE, e só isso. Contêiner de CI costuma não ter xattr, e sem
+    // a origem do download o teste em massa mede o sistema sem o sinal mais forte
+    // que ele tem — o que subestima tudo. O corpus escreve este manifesto; num
+    // Mac ou Windows de verdade ele não existe e este caminho nunca roda.
+    return originsFromManifest(file);
   },
   downloadedDate(file) {
     try { const st = fs.statSync(file); return st.birthtimeMs ? new Date(st.birthtimeMs) : null; }

@@ -38,6 +38,11 @@ const DEFAULTS = {
     timeoutMs: 45000
   },
 
+  // Perfil de uso. Decide o mapa de tipo -> pasta (veja src/core/placement.js).
+  // 'auto' faz a varredura adivinhar na primeira execução.
+  // geral | designer | videomaker | fotografo | programador | youtuber
+  perfil: 'geral',
+
   // Idioma dos nomes de arquivo gerados.
   lang: 'pt',
 

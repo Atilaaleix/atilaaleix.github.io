@@ -15,6 +15,8 @@ import { propose, apply, undo, undoToday, listLoose, loadTaxonomy, isSettled } f
 import { createServer } from './src/server/index.js';
 import { runBench, printReport } from './src/bench/groundtruth.js';
 import { buildSandbox } from './src/bench/sandbox.js';
+import { buildCorpus, PERFIS_DISPONIVEIS } from './src/bench/corpus.js';
+import { PRESETS, getPreset, guessProfile } from './src/core/presets.js';
 
 const cfg = loadConfig();
 const args = process.argv.slice(2);
@@ -202,11 +204,66 @@ function live() {
   console.log(c.dim(`  comece por: node cli.js scan\n`));
 }
 
+function corpus() {
+  const persona = typeof flag('perfil') === 'string' ? String(flag('perfil')) : 'geral';
+  if (!PERFIS_DISPONIVEIS.includes(persona)) {
+    throw new Error(`perfil desconhecido: ${persona}\n  disponíveis: ${PERFIS_DISPONIVEIS.join(', ')}`);
+  }
+  const n = Number(flag('n', 3000));
+  const root = expand(flag('root')) || path.join(DATA_DIR, 'corpus', persona);
+
+  console.log(c.dim(`\n  gerando ${n} arquivos do perfil "${persona}"...`));
+  const t0 = Date.now();
+  const info = buildCorpus({ persona, n, root, soltos: 200 });
+  const perfil = guessProfile(info.porExt, info.nomesDePasta);
+
+  cfg.perfil = persona;
+  cfg.watch = [info.entrada];
+  cfg.destRoot = path.join(root, 'Guardados');
+  cfg.learnFrom = [info.organizado];
+  saveConfig(cfg);
+
+  console.log(c.b(`\n  Corpus "${persona}" pronto em ${((Date.now() - t0) / 1000).toFixed(1)}s\n`));
+  console.log(`  ${String(info.arquivos).padStart(6)} arquivos organizados (o gabarito)`);
+  console.log(`  ${String(info.soltos).padStart(6)} arquivos soltos em Entrada`);
+  console.log(`  ${String(info.pastas).padStart(6)} pastas distintas`);
+  console.log(c.dim(`\n  perfil detectado pela varredura: ${perfil.preset.id} (${perfil.confianca})`));
+  if (perfil.porque.length) console.log(c.dim(`  porque: ${perfil.porque.join(', ')}`));
+  console.log(c.dim(`\n  top extensões: ${Object.entries(info.porExt).slice(0, 8).map(([e, n2]) => `${e} ${n2}`).join('  ')}`));
+  console.log(c.b(`\n  agora: node cli.js bench --no-model --n 400\n`));
+}
+
+function perfilCmd() {
+  const alvo = args[1] && !args[1].startsWith('--') ? args[1] : null;
+  if (!alvo) {
+    console.log(c.b('\n  Perfis disponíveis\n'));
+    for (const p of PRESETS) {
+      const atual = p.id === cfg.perfil;
+      console.log(`  ${atual ? c.g('>') : ' '} ${c.b(p.id.padEnd(13))}${p.label}`);
+      console.log(`    ${c.dim(p.why)}`);
+      console.log(`    ${c.dim('pastas: ' + p.tree.slice(0, 4).join('  ') + (p.tree.length > 4 ? ` … +${p.tree.length - 4}` : ''))}\n`);
+    }
+    console.log(c.dim(`  atual: ${cfg.perfil}. mudar: node cli.js perfil designer\n`));
+    return;
+  }
+  const p = getPreset(alvo);
+  if (p.id !== alvo) throw new Error(`perfil desconhecido: ${alvo}`);
+  cfg.perfil = p.id;
+  saveConfig(cfg);
+  console.log(c.g(`\n  perfil agora é "${p.id}" (${p.label})`));
+  console.log(c.dim(`  ${p.why}\n`));
+  for (const t of p.tree) console.log('   ' + c.dim(t));
+  console.log('');
+}
+
 const HELP = `
   ${c.b('pastinha')} — um bicho com TOC de arrumação          ${c.dim(platform.label)}
 
   ${c.c('node cli.js sandbox')}        caixa de areia com bagunça de mentira. comece por aqui
   ${c.c('node cli.js doctor')}         vê se a máquina está pronta
+  ${c.c('node cli.js corpus --perfil fotografo --n 20000')}
+                             corpus em massa de um perfil, com gabarito
+  ${c.c('node cli.js perfil')}         lista os perfis · ${c.c('perfil designer')} troca
   ${c.c('node cli.js bench')}          mede acurácia usando pastas já organizadas como gabarito
   ${c.c('node cli.js scan')}           simula: o que ele faria. não move nada
   ${c.c('node cli.js scan --apply')}   decide um por um, no terminal
@@ -216,7 +273,8 @@ const HELP = `
   ${c.c('node cli.js server')}         sobe o motor e o bicho em http://127.0.0.1:${cfg.port}
   ${c.c('node cli.js live')}           aponta para os seus arquivos de verdade
 
-  bandeiras: --no-model  --apply  --dry-run  --limit N  --root CAMINHO  --n N
+  bandeiras: --no-model  --apply  --dry-run  --limit N  --root CAMINHO  --n N  --perfil NOME
+  perfis: ${PERFIS_DISPONIVEIS.join(' · ')}
 
   config  ${tilde(CONFIG_PATH)}
   memória ${tilde(JOURNAL_PATH)}
@@ -226,6 +284,8 @@ try {
   switch (cmd) {
     case 'doctor': await doctor(); break;
     case 'sandbox': sandbox(); break;
+    case 'corpus': corpus(); break;
+    case 'perfil': perfilCmd(); break;
     case 'live': live(); break;
     case 'scan': await scan({ interactive: has('apply') }); break;
     case 'find': find(args.slice(1).filter(a => !a.startsWith('--')).join(' ')); break;
@@ -244,7 +304,8 @@ try {
         root: expand(flag('root')) || null,
         n: Number(flag('n', 120)),
         noModel: has('no-model'),
-        verbose: has('verbose')
+        verbose: has('verbose'),
+        perfil: typeof flag('perfil') === 'string' ? String(flag('perfil')) : null
       });
       printReport(rep);
       const out = path.join(DATA_DIR, `bench-${Date.now()}.json`);

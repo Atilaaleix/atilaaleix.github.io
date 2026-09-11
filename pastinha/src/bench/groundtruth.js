@@ -44,9 +44,10 @@ const topLevel = p => (p || '').split('/')[0];
 
 /**
  * @param {any} cfg
- * @param {{root?:string|null, n?:number, noModel?:boolean, verbose?:boolean}} [opts]
+ * @param {{root?:string|null, n?:number, noModel?:boolean, verbose?:boolean, perfil?:string|null}} [opts]
  */
-export async function runBench(cfg, { root = null, n = 120, noModel = false, verbose = false } = {}) {
+export async function runBench(cfg, { root = null, n = 120, noModel = false, verbose = false, perfil = null } = {}) {
+  if (perfil) cfg = { ...cfg, perfil };
   const reference = root || cfg.learnFrom.find(r => fs.existsSync(r));
   if (!reference || !fs.existsSync(reference)) {
     throw new Error(`Não achei pasta de referência. Passe --root ~/Documents`);
@@ -62,7 +63,7 @@ export async function runBench(cfg, { root = null, n = 120, noModel = false, ver
 
   /** @type {any[]} */
   const rows = [];
-  let exact = 0, top = 0, ruleOnly = 0, modelUsed = 0, errors = 0;
+  let exact = 0, top = 0, ruleOnly = 0, modelUsed = 0, errors = 0, instancia = 0, exatoSemSlot = 0, comSlot = 0;
   const t0 = Date.now();
 
   for (let i = 0; i < set.length; i++) {
@@ -80,11 +81,22 @@ export async function runBench(cfg, { root = null, n = 120, noModel = false, ver
     const hitTop = topLevel(p.folder) === topLevel(truth);
     if (hitExact) exact++;
     if (hitTop) top++;
+    if (p.precisaInstancia) {
+      instancia++;
+      // Um destino como "Ensaios/{ano}/{ensaio}/RAW" nunca bate string com
+      // "Ensaios/2026/03-casamento-silva/RAW". Medir só o esqueleto separa
+      // "errou a categoria" de "acertou a categoria e falta escolher a instância".
+      const esqueleto = String(p.folder).replace(/\{\w+\}/g, '*');
+      const alvo = truth.split('/');
+      const partes = esqueleto.split('/');
+      if (partes.length === alvo.length &&
+          partes.every((seg, i) => seg === '*' || seg === alvo[i])) comSlot++;
+    } else if (hitExact) exatoSemSlot++;
     if (!p.usedModel) ruleOnly++; else modelUsed++;
 
     rows.push({
       name: path.basename(file),
-      truth, guess: p.folder,
+      truth, guess: p.folder, tipo: p.tipo, precisaInstancia: !!p.precisaInstancia,
       hitExact, hitTop,
       conf: p.confidence,
       by: p.decidedBy,
@@ -114,6 +126,9 @@ export async function runBench(cfg, { root = null, n = 120, noModel = false, ver
     porArquivo: +(secs / total).toFixed(2),
     acertoExato: +(exact / total).toFixed(3),
     acertoCategoriaRaiz: +(top / total).toFixed(3),
+    perfil: cfg.perfil,
+    precisamInstancia: instancia,
+    acertoEstrutural: +((exatoSemSlot + comSlot) / total).toFixed(3),
     semModelo: ruleOnly, comModelo: modelUsed,
     percentualResolvidoSemModelo: +(ruleOnly / total).toFixed(3),
     byDecider,
@@ -134,6 +149,10 @@ export function printReport(rep) {
   console.log('');
   console.log(`  ACERTO EXATO ..... ${pct(rep.acertoExato)}   (pasta idêntica à sua)`);
   console.log(`  ACERTO NA RAIZ ... ${pct(rep.acertoCategoriaRaiz)}   (categoria de primeiro nível certa)`);
+  if (rep.acertoEstrutural !== undefined) {
+    console.log(`  ACERTO ESTRUTURAL  ${pct(rep.acertoEstrutural)}   (pasta certa, faltando só escolher a instância)`);
+    console.log(`  precisam instância ${String(rep.precisamInstancia).padStart(4)}    (qual projeto? qual ensaio? -> vira pergunta)`);
+  }
   console.log(`  sem modelo ....... ${pct(rep.percentualResolvidoSemModelo)}   (${rep.semModelo} por regra, ${rep.comModelo} pelo LLM)`);
   console.log('');
   console.log('  quem decidiu        n     exato    raiz');

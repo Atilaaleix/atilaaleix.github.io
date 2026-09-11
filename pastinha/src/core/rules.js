@@ -1,6 +1,18 @@
-// O classificador determinístico. A aposta do projeto é que ISTO resolve
-// 70-80% dos arquivos sozinho. Cada regra é testável, explicável e instantânea.
-// Se uma regra acerta, o modelo nem é chamado.
+// O classificador determinístico.
+//
+// SEPARAÇÃO QUE O TESTE EM MASSA OBRIGOU A FAZER. Antes, uma regra dizia
+// "boleto -> Financeiro/Contas", misturando duas perguntas completamente
+// diferentes:
+//
+//   1. O QUE este arquivo é?      universal. boleto é boleto no disco de todo mundo.
+//   2. ONDE ele deve ficar?       pessoal. depende da estrutura DAQUELE usuário.
+//
+// Com as duas juntas, o classificador acertava 91% num disco comum e 5% no disco
+// de um fotógrafo — porque nenhuma regra genérica vai adivinhar
+// "Ensaios/2026/03-casamento-silva/RAW".
+//
+// Então as regras daqui para frente respondem SÓ a primeira pergunta: devolvem um
+// TIPO. O mapa de tipo para pasta vive em presets.js, é dado, e muda por perfil.
 import path from 'node:path';
 
 /**
@@ -8,65 +20,92 @@ import path from 'node:path';
  * @type {Array<[RegExp, string]>}
  */
 const DOMAIN_MAP = [
-  [/(^|\.)gov\.br$|receita\.fazenda|nfe\.fazenda|detran|inss|esocial/i, 'Documentos/Governo'],
-  [/nubank|itau|bradesco|santander|bancodobrasil|bb\.com\.br|caixa\.gov|inter\.co|c6bank|btgpactual|xpi\.com|binance|mercadopago/i, 'Financeiro'],
-  [/figma\.com|sketch\.com|dribbble|behance|unsplash|pexels|freepik|fonts\.google/i, 'Design'],
-  [/github|gitlab|bitbucket|npmjs|pypi|stackoverflow|developer\.apple|docker/i, 'Codigo'],
-  [/arxiv|scholar\.google|sciencedirect|jstor|springer|nature\.com|pubmed|ieee/i, 'Leitura/Artigos'],
-  [/linkedin|glassdoor|gupy|catho|indeed/i, 'Carreira'],
-  [/youtube|vimeo|twitch|spotify|soundcloud/i, 'Midia'],
-  [/booking|airbnb|latam|gol\.com|azul|decolar|kayak|expedia|tam\b/i, 'Viagens'],
-  [/amazon|mercadolivre|shopee|aliexpress|magazineluiza|americanas|kabum/i, 'Compras'],
-  [/notion|docs\.google|drive\.google|dropbox|sharepoint|onedrive/i, 'Trabalho'],
-  [/whatsapp|web\.whatsapp/i, 'Recebidos/WhatsApp']
+  [/(^|\.)gov\.br$|receita\.fazenda|nfe\.fazenda|detran|inss|esocial/i, 'doc-governo'],
+  [/nubank|itau|bradesco|santander|bancodobrasil|bb\.com\.br|caixa\.gov|inter\.co|c6bank|btgpactual|xpi\.com|binance|mercadopago/i, 'financeiro'],
+  [/figma\.com|sketch\.com|dribbble|behance|unsplash|pexels|freepik/i, 'referencia'],
+  [/fonts\.google|fontshare|myfonts/i, 'fonte'],
+  [/github|gitlab|bitbucket|npmjs|pypi|stackoverflow|developer\.apple|docker/i, 'doc-tecnica'],
+  [/arxiv|scholar\.google|sciencedirect|jstor|springer|nature\.com|pubmed|ieee/i, 'artigo'],
+  [/linkedin|glassdoor|gupy|catho|indeed/i, 'carreira'],
+  [/youtube|vimeo|twitch/i, 'video-baixado'],
+  [/spotify|soundcloud|bandcamp/i, 'trilha'],
+  [/booking|airbnb|latam|gol\.com|azul|decolar|kayak|expedia/i, 'viagem'],
+  [/amazon|mercadolivre|shopee|aliexpress|magazineluiza|americanas|kabum/i, 'compra'],
+  [/notion|docs\.google|drive\.google|dropbox|sharepoint|onedrive/i, 'trabalho'],
+  [/whatsapp|web\.whatsapp/i, 'foto-whatsapp']
 ];
 
 /** @type {Array<[string[], string, number]>} */
 const EXT_MAP = [
-  [['.dmg', '.pkg', '.mpkg'], 'Instaladores', 0.97],
-  [['.ipa', '.apk'], 'Instaladores', 0.95],
-  [['.torrent'], 'Downloads/Torrents', 0.95],
-  [['.fig', '.sketch', '.xd', '.psd', '.ai', '.indd', '.afdesign', '.afphoto'], 'Design', 0.92],
-  [['.ttf', '.otf', '.woff', '.woff2'], 'Design/Fontes', 0.95],
-  [['.srt', '.vtt', '.ass'], 'Midia/Legendas', 0.93],
-  [['.epub', '.mobi', '.azw3'], 'Leitura/Livros', 0.95],
-  [['.mp3', '.wav', '.flac', '.aac', '.m4a', '.aiff'], 'Midia/Audio', 0.9],
-  [['.mp4', '.mov', '.mkv', '.avi', '.webm', '.m4v'], 'Midia/Video', 0.88],
-  [['.ics'], 'Documentos/Calendario', 0.9],
-  [['.sql', '.db', '.sqlite'], 'Codigo/Dados', 0.85],
-  [['.iso', '.img'], 'Instaladores/Imagens', 0.9],
-  [['.stl', '.obj', '.3mf', '.gcode'], 'Design/3D', 0.92]
+  [['.dmg', '.pkg', '.mpkg', '.exe', '.msi', '.ipa', '.apk', '.appimage'], 'instalador', 0.96],
+  [['.torrent'], 'torrent', 0.95],
+  [['.fig', '.sketch', '.xd', '.psd', '.ai', '.indd', '.afdesign', '.afphoto'], 'arquivo-design', 0.93],
+  [['.ttf', '.otf', '.woff', '.woff2'], 'fonte', 0.96],
+  [['.srt', '.vtt', '.ass', '.sub'], 'legenda', 0.94],
+  [['.epub', '.mobi', '.azw3'], 'livro', 0.95],
+  [['.cr2', '.cr3', '.nef', '.arw', '.raf', '.dng', '.orf', '.rw2', '.braw', '.r3d'], 'raw', 0.97],
+  [['.xmp', '.lrcat', '.lrtemplate'], 'sidecar', 0.95],
+  [['.prproj', '.drp', '.aep', '.fcpbundle', '.veg', '.kdenlive'], 'projeto-edicao', 0.96],
+  [['.cube', '.look', '.3dl'], 'lut', 0.96],
+  [['.mp3', '.wav', '.flac', '.aac', '.m4a', '.aiff', '.ogg'], 'audio', 0.85],
+  [['.mp4', '.mov', '.mkv', '.avi', '.webm', '.m4v', '.mxf'], 'video', 0.82],
+  [['.ics'], 'calendario', 0.9],
+  [['.sql', '.db', '.sqlite'], 'dados', 0.85],
+  [['.pem', '.key', '.p12', '.keystore', '.mobileprovision'], 'credencial', 0.94],
+  [['.ts', '.tsx', '.jsx', '.py', '.go', '.rs', '.swift', '.java', '.kt', '.rb', '.php', '.ipynb'], 'codigo', 0.9],
+  [['.iso', '.img'], 'imagem-disco', 0.9],
+  [['.stl', '.obj', '.3mf', '.gcode'], 'modelo-3d', 0.92],
+  [['.zip', '.rar', '.7z', '.tar', '.gz'], 'arquivo-comprimido', 0.7]
 ];
 
 /**
  * Padrões de nome. Cobre PT e EN porque o sistema do usuário pode estar em qualquer um.
  * contentSafe:false = só faz sentido no nome, nunca dentro do texto.
- * @type {Array<{re:RegExp, folder:string, conf:number, name?:string, contentSafe?:boolean}>}
+ * @type {Array<{re:RegExp, tipo:string, conf:number, name?:string, contentSafe?:boolean}>}
  */
 const NAME_RULES = [
-  { re: /^(screenshot|captura de tela|screen shot)/i, folder: 'Capturas', conf: 0.96, name: 'captura-de-tela', contentSafe: false },
-  { re: /^(img|dsc|dscn|p\d{7}|gopro|pxl)[_-]?\d{3,}/i, folder: 'Fotos', conf: 0.9, contentSafe: false },
-  { re: /^(whatsapp|whats)[ _-]?(image|video|audio|ptt)/i, folder: 'Recebidos/WhatsApp', conf: 0.94 },
-  { re: /\b(boleto|fatura|invoice|recibo|nota[ _-]?fiscal|nfe|danfe|comprovante)\b/i, folder: 'Financeiro/Contas', conf: 0.88 },
-  { re: /\b(extrato|statement|informe[ _-]?de[ _-]?rendimentos)\b/i, folder: 'Financeiro/Extratos', conf: 0.88 },
-  { re: /\b(contrato|contract|aditivo|distrato|procuracao)\b/i, folder: 'Juridico/Contratos', conf: 0.85 },
-  { re: /\b(curriculo|curr[íi]culo|resume|\bcv\b)\b/i, folder: 'Carreira', conf: 0.87 },
-  { re: /\b(passaporte|rg\b|cnh\b|certidao|certid[ãa]o|titulo[ _-]?de[ _-]?eleitor)\b/i, folder: 'Documentos/Pessoais', conf: 0.9 },
-  { re: /\b(ingresso|ticket|boarding|cart[ãa]o[ _-]?de[ _-]?embarque|reserva)\b/i, folder: 'Viagens', conf: 0.85 },
-  { re: /\b(apresentacao|apresenta[çc][ãa]o|deck|pitch)\b/i, folder: 'Trabalho/Apresentacoes', conf: 0.8 },
-  { re: /^(zoom|meet|teams)[_-]/i, folder: 'Trabalho/Reunioes', conf: 0.85, contentSafe: false },
-  { re: /\b(notas? da reuniao|ata de reuniao|meeting notes)\b/i, folder: 'Trabalho/Reunioes', conf: 0.82 },
-  { re: /\b(relatorio|report) (trimestral|mensal|anual)\b/i, folder: 'Trabalho/Relatorios', conf: 0.8 },
-  { re: /\b(proposta comercial|orcamento|or[çc]amento)\b/i, folder: 'Trabalho/Propostas', conf: 0.8 }
+  { re: /^(screenshot|captura de tela|screen shot|cleanshot)/i, tipo: 'captura', conf: 0.96, name: 'captura-de-tela', contentSafe: false },
+  { re: /^(img|dsc|dscn|dscf|p\d{7}|gopro|pxl|gx\d{6})[_-]?\d{3,}/i, tipo: 'foto-camera', conf: 0.9, contentSafe: false },
+  { re: /^(whatsapp|whats)[ _-]?(image|video|audio|ptt)/i, tipo: 'foto-whatsapp', conf: 0.94, contentSafe: false },
+  { re: /\b(boleto|fatura|invoice)\b/i, tipo: 'fatura', conf: 0.9 },
+  { re: /\b(recibo|nota[ _-]?fiscal|nfe|danfe|comprovante|pix)\b/i, tipo: 'nota-fiscal', conf: 0.88 },
+  { re: /\b(extrato|statement|informe[ _-]?de[ _-]?rendimentos)\b/i, tipo: 'extrato', conf: 0.9 },
+  { re: /\b(irpf|imposto[ _-]?de[ _-]?renda|darf|dirf)\b/i, tipo: 'imposto', conf: 0.92 },
+  { re: /\b(contrato|contract|aditivo|distrato|procuracao|nda)\b/i, tipo: 'contrato', conf: 0.88 },
+  { re: /\b(curriculo|curr[íi]culo|resume|\bcv\b)\b/i, tipo: 'curriculo', conf: 0.88 },
+  { re: /\b(passaporte|rg\b|cnh\b|certidao|certid[ãa]o|titulo[ _-]?de[ _-]?eleitor)\b/i, tipo: 'doc-pessoal', conf: 0.9 },
+  { re: /\b(exame|laudo|receita[ _-]?medica|atestado|hemograma)\b/i, tipo: 'saude', conf: 0.88 },
+  { re: /\b(ingresso|ticket|boarding|cart[ãa]o[ _-]?de[ _-]?embarque|passagem|eticket|reserva)\b/i, tipo: 'viagem', conf: 0.88 },
+  { re: /\b(apresentacao|apresenta[çc][ãa]o|deck|pitch|keynote)\b/i, tipo: 'apresentacao', conf: 0.85 },
+  { re: /\b(briefing|brief)\b/i, tipo: 'briefing', conf: 0.88 },
+  { re: /\b(roteiro|script|storyboard)\b/i, tipo: 'roteiro', conf: 0.86 },
+  { re: /\b(proposta[ _-]?comercial|orcamento|or[çc]amento|budget)\b/i, tipo: 'proposta', conf: 0.86 },
+  { re: /\b(mockup|mock[ _-]?up)\b/i, tipo: 'mockup', conf: 0.88 },
+  { re: /\b(thumb|thumbnail|miniatura|capa[ _-]?ep)\b/i, tipo: 'miniatura', conf: 0.86 },
+  { re: /\b(logo|logotipo|favicon|marca[ _-]?dagua)\b/i, tipo: 'logo', conf: 0.84 },
+  { re: /\b(banner|hero|capa)\b/i, tipo: 'banner', conf: 0.78 },
+  { re: /\b(post|feed|carrossel|stories)\b/i, tipo: 'arte-social', conf: 0.8 },
+  { re: /\b(scan|digitalizado|digitalizacao)\b/i, tipo: 'scan', conf: 0.85 },
+  { re: /\b(trilha|soundtrack|bgm|musica[ _-]?fundo)\b/i, tipo: 'trilha', conf: 0.86 },
+  { re: /\b(narracao|locucao|voiceover|vo\b)\b/i, tipo: 'audio-bruto', conf: 0.84 },
+  { re: /^(zoom|meet|teams|gmt\d)[_-]/i, tipo: 'reuniao', conf: 0.85, contentSafe: false },
+  { re: /\b(notas? da reuniao|ata de reuniao|meeting notes)\b/i, tipo: 'reuniao', conf: 0.84 },
+  { re: /\b(relatorio|report) (trimestral|mensal|anual|de)\b/i, tipo: 'relatorio', conf: 0.84 },
+  { re: /\b(final|master|aprovado|entrega)\b.*\.(mp4|mov)$/i, tipo: 'video-entrega', conf: 0.8, contentSafe: false },
+  { re: /\b(abstract|introduction|we present|arxiv)\b/i, tipo: 'artigo', conf: 0.8 }
 ];
 
 /** @type {Array<[RegExp, string, number]>} */
 const MIME_FALLBACK = [
-  [/^image\//, 'Imagens', 0.6],
-  [/^video\//, 'Midia/Video', 0.7],
-  [/^audio\//, 'Midia/Audio', 0.7],
-  [/^application\/(zip|x-tar|gzip|x-7z|x-rar)/, 'Downloads/Arquivos', 0.55],
-  [/^text\//, 'Documentos/Texto', 0.5]
+  [/^image\//, 'imagem', 0.45],
+  [/^video\//, 'video', 0.6],
+  [/^audio\//, 'audio', 0.6],
+  [/^application\/(zip|x-tar|gzip|x-7z|x-rar)/, 'arquivo-comprimido', 0.5],
+  [/^application\/vnd\.openxml.*presentation/, 'apresentacao', 0.6],
+  [/^application\/vnd\.openxml.*spreadsheet/, 'planilha', 0.65],
+  [/^application\/vnd\.openxml.*word/, 'documento', 0.4],
+  [/^application\/pdf/, 'documento', 0.35],
+  [/^text\//, 'texto', 0.4]
 ];
 
 export function domainOf(url) {
@@ -75,7 +114,7 @@ export function domainOf(url) {
 
 /**
  * @typedef {object} RuleVerdict
- * @property {string} folder
+ * @property {string} tipo      O QUE o arquivo é. Universal, não depende do usuário.
  * @property {number} confidence
  * @property {string} decidedBy
  * @property {string} reason
@@ -84,18 +123,18 @@ export function domainOf(url) {
  */
 
 /**
+ * Responde SÓ "o que é este arquivo". Onde ele vai é trabalho de placement.js.
  * Devolve null quando nenhuma regra tem opinião — aí o Cérebro assume.
+ *
  * @param {{name:string, ext:string, mime?:string|null, whereFroms?:string[],
- *          exif?:{Make?:string,Model?:string,DateTimeOriginal?:Date}, text?:string}} ctx
+ *          exif?:{Make?:string,Model?:string,DateTimeOriginal?:Date},
+ *          shape?:{hint:string,confidence:number,note:string}|null, text?:string}} ctx
  * @returns {RuleVerdict|null}
  */
 export function classify(ctx) {
-  const { name, ext, mime, whereFroms = [], exif = {} } = ctx;
+  const { name, ext, mime, whereFroms = [], exif = {}, shape = null } = ctx;
 
-  // Underscore conta como caractere de palavra, então \b nunca casa em
-  // "boleto_condominio". Nome de arquivo vive cheio de underscore, camelCase e
-  // acento — normaliza tudo para espaço antes de testar qualquer padrão.
-  const flatten = (s) => s
+  const flatten = (str) => String(str)
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/[_.\-]+/g, ' ')
@@ -103,78 +142,76 @@ export function classify(ctx) {
 
   const flat = flatten(name);
   // Arquivo que JÁ passou pelo bicho vira "2026-07-01__captura-de-tela.png".
-  // Sem tirar o prefixo de data, toda regra ancorada em ^ deixa de casar e ele
-  // erra justamente nos arquivos que ele mesmo organizou.
+  // Sem tirar o prefixo de data, toda regra ancorada em ^ deixa de casar.
   const flatNoDate = flatten(name.replace(/^\d{4}-\d{2}-\d{2}__/, ''));
 
-  // 1. Origem do download vence quase tudo: é fato, não inferência.
+  const veredito = (tipo, confidence, decidedBy, reason, extra = {}) =>
+    ({ tipo, confidence, decidedBy, reason, source: whereFroms[0] || null, ...extra });
+
+  // 1. Extensão inequívoca vem primeiro: .cr3 é RAW, ponto final. Nenhum nome
+  //    de arquivo desmente isso, e é o sinal que salva os perfis profissionais.
+  for (const [exts, tipo, conf] of EXT_MAP) {
+    if (exts.includes(ext)) return veredito(tipo, conf, `ext:${ext}`, `${ext} é sempre ${tipo}`);
+  }
+
+  // 2. Padrão de nome. Vem ANTES da origem, e a ordem foi decidida medindo:
+  // "boleto_condominio.pdf" baixado do site do banco é um boleto, não um
+  // "arquivo financeiro". O nome é mais específico que o domínio quase sempre.
+  for (const r of NAME_RULES) {
+    if (r.re.test(flat) || r.re.test(flatNoDate) || r.re.test(name)) {
+      return veredito(r.tipo, r.conf, `nome:${r.tipo}`, `O nome indica ${r.tipo}`, { nameHint: r.name });
+    }
+  }
+
+  // 3. Origem do download. Assume quando o nome não diz nada — que é o caso de
+  // todo arquivo com nome de código, hash ou "documento (3)".
   for (const url of whereFroms) {
     const host = domainOf(url);
     if (!host) continue;
-    for (const [re, folder] of DOMAIN_MAP) {
-      if (re.test(host)) {
-        return { folder, confidence: 0.9, decidedBy: `origem:${host}`,
-                 reason: `Veio de ${host}`, source: url };
-      }
+    for (const [re, tipo] of DOMAIN_MAP) {
+      if (re.test(host)) return veredito(tipo, 0.86, `origem:${host}`, `Veio de ${host}`, { source: url });
     }
   }
 
-  // 2. Padrão de nome.
-  for (const r of NAME_RULES) {
-    if (r.re.test(flat) || r.re.test(flatNoDate) || r.re.test(name)) {
-      return { folder: r.folder, confidence: r.conf, decidedBy: `nome:${r.re.source.slice(0, 28)}`,
-               reason: `O nome bate com ${r.folder.toLowerCase()}`, nameHint: r.name,
-               source: whereFroms[0] || null };
-    }
-  }
-
-  // 3. Extensão inequívoca.
-  for (const [exts, folder, conf] of EXT_MAP) {
-    if (exts.includes(ext)) {
-      return { folder, confidence: conf, decidedBy: `ext:${ext}`,
-               reason: `${ext} é sempre ${folder.toLowerCase()}`, source: whereFroms[0] || null };
-    }
-  }
-
-  // 4. Foto de câmera de verdade (tem modelo de câmera no EXIF).
-  if (exif.Model && /^image\//.test(mime || '')) {
-    const year = exif.DateTimeOriginal instanceof Date
-      ? String(exif.DateTimeOriginal.getFullYear()) : null;
-    return { folder: year ? `Fotos/${year}` : 'Fotos', confidence: 0.88, decidedBy: 'exif:camera',
-             reason: `Foto tirada com ${[exif.Make, exif.Model].filter(Boolean).join(' ')}`,
-             source: whereFroms[0] || null };
+  // 4. Foto de câmera de verdade: tem modelo de câmera no EXIF.
+  if (exif.Model) {
+    return veredito('foto-camera', 0.9, 'exif:camera',
+      `Foto tirada com ${[exif.Make, exif.Model].filter(Boolean).join(' ')}`,
+      { ano: exif.DateTimeOriginal instanceof Date ? exif.DateTimeOriginal.getFullYear() : null });
   }
 
   // 5. As mesmas palavras-chave, agora dentro do conteúdo já extraído.
-  //
-  // Um "CARTAO DE EMBARQUE" ou um "CONTRATO DE LOCACAO" na primeira linha do
-  // documento vale tanto quanto no nome — e arquivo com nome inútil
-  // ("documento sem nome (3).pdf") é exatamente o caso mais comum.
-  // Confiança um pouco menor que a do nome, porque o texto pode ser citação.
+  //    Arquivo com nome inútil ("documento (3).pdf") é o caso mais comum de todos.
   if (ctx.text && ctx.text.length > 20) {
     const head = flatten(ctx.text.slice(0, 600));
     for (const r of NAME_RULES) {
       if (r.contentSafe === false) continue;
       if (r.re.test(head)) {
-        return { folder: r.folder, confidence: Math.max(0.6, r.conf - 0.1),
-                 decidedBy: 'conteudo', reason: `O conteúdo parece ${r.folder.toLowerCase()}`,
-                 source: whereFroms[0] || null };
+        return veredito(r.tipo, Math.max(0.6, r.conf - 0.08), 'conteudo',
+          `O conteúdo indica ${r.tipo}`);
       }
     }
   }
 
-  // 6. Chute por tipo real. Confiança baixa de propósito: vai virar pergunta.
-  for (const [re, folder, conf] of MIME_FALLBACK) {
+  // 6. Forma da imagem. Único sinal que sobra quando não há EXIF nem nome útil —
+  //    e imagem sem os dois é justamente o caso que mais aparece.
+  if (shape) {
+    const mapa = { captura: 'captura', documento: 'scan', social: 'arte-social',
+                   arte: 'banner', foto: 'foto-camera', recorte: 'captura' };
+    const tipo = mapa[shape.hint];
+    if (tipo) return veredito(tipo, shape.confidence, `forma:${shape.hint}`, shape.note);
+  }
+
+  // 7. Chute por tipo real. Confiança baixa de propósito: vira pergunta.
+  for (const [re, tipo, conf] of MIME_FALLBACK) {
     if (re.test(mime || '')) {
-      return { folder, confidence: conf, decidedBy: `mime:${mime}`,
-               reason: `É ${mime}, mas não sei do que se trata`, source: whereFroms[0] || null };
+      return veredito(tipo, conf, `mime:${mime}`, `É ${mime}, mas não sei do que se trata`);
     }
   }
 
   return null;
 }
 
-/** Nome de arquivo previsível. O modelo só escreve o miolo; isto é código. */
 /**
  * @param {string} s
  * @param {number} [maxLen]

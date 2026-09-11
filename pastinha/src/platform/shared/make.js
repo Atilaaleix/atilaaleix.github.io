@@ -159,3 +159,102 @@ export function makePdf(text) {
 
   return Buffer.concat(parts);
 }
+
+// ---------------------------------------------------------------------------
+// Imagens sintéticas com dimensões e EXIF controlados.
+//
+// Não são imagens decodificáveis — são cabeçalhos estruturalmente válidos.
+// É exatamente o que precisa ser testado: o Pastinha nunca decodifica pixel,
+// ele lê cabeçalho. Uma imagem "de verdade" de 3 MB testaria o decodificador
+// de outra pessoa, não o nosso código.
+// ---------------------------------------------------------------------------
+
+function pngChunk(type, data) {
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length, 0);
+  const body = Buffer.concat([Buffer.from(type, 'latin1'), data]);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(body), 0);
+  return Buffer.concat([len, body, crc]);
+}
+
+/** @param {number} w @param {number} h */
+export function makePng(w, h) {
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0);
+  ihdr.writeUInt32BE(h, 4);
+  ihdr[8] = 8;      // profundidade
+  ihdr[9] = 2;      // cor: RGB
+  const idat = zlib.deflateSync(Buffer.alloc(16));
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngChunk('IHDR', ihdr),
+    pngChunk('IDAT', idat),
+    pngChunk('IEND', Buffer.alloc(0))
+  ]);
+}
+
+/** Monta um bloco EXIF (TIFF little-endian) com fabricante, modelo e data. */
+function exifBlock({ make, model, date }) {
+  const entries = [];
+  const strings = [];
+  let stringOffset = 8 + 2 + 3 * 12 + 4;   // cabeçalho + contagem + 3 entradas + próximo IFD
+
+  const addString = (tag, value) => {
+    const buf = Buffer.from(value + '\0', 'latin1');
+    entries.push({ tag, type: 2, count: buf.length, offset: stringOffset });
+    strings.push(buf);
+    stringOffset += buf.length;
+  };
+
+  addString(0x010f, make);
+  addString(0x0110, model);
+  addString(0x0132, date);   // "2026:09:11 14:22:03"
+
+  const head = Buffer.alloc(8 + 2 + entries.length * 12 + 4);
+  head.write('II', 0, 'latin1');
+  head.writeUInt16LE(42, 2);
+  head.writeUInt32LE(8, 4);              // primeiro IFD logo após o cabeçalho
+  head.writeUInt16LE(entries.length, 8);
+  entries.forEach((e, i) => {
+    const o = 10 + i * 12;
+    head.writeUInt16LE(e.tag, o);
+    head.writeUInt16LE(e.type, o + 2);
+    head.writeUInt32LE(e.count, o + 4);
+    head.writeUInt32LE(e.offset, o + 8);
+  });
+  head.writeUInt32LE(0, 10 + entries.length * 12);   // não há próximo IFD
+
+  return Buffer.concat([head, ...strings]);
+}
+
+/**
+ * @param {number} w @param {number} h
+ * @param {{make:string, model:string, date:string}} [exif]
+ */
+export function makeJpeg(w, h, exif) {
+  const parts = [Buffer.from([0xff, 0xd8])];   // SOI
+
+  if (exif) {
+    const tiff = exifBlock(exif);
+    const payload = Buffer.concat([Buffer.from('Exif\0\0', 'latin1'), tiff]);
+    const app1 = Buffer.alloc(4);
+    app1.writeUInt16BE(0xffe1, 0);
+    app1.writeUInt16BE(payload.length + 2, 2);
+    parts.push(app1, payload);
+  }
+
+  const sof = Buffer.alloc(4 + 6);
+  sof.writeUInt16BE(0xffc0, 0);
+  sof.writeUInt16BE(8 + 3, 2);   // tamanho do segmento: 1 componente
+  sof.writeUInt8(8, 4);          // precisão
+  sof.writeUInt16BE(h, 5);
+  sof.writeUInt16BE(w, 7);
+  sof.writeUInt8(1, 9);          // número de componentes
+  parts.push(sof, Buffer.from([0x01, 0x11, 0x00]));
+
+  parts.push(Buffer.from([0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00]));
+  parts.push(Buffer.alloc(8));
+  parts.push(Buffer.from([0xff, 0xd9]));   // EOI
+  return Buffer.concat(parts);
+}
