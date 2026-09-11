@@ -17,6 +17,7 @@ import { runBench, printReport } from './src/bench/groundtruth.js';
 import { buildSandbox } from './src/bench/sandbox.js';
 import { buildCorpus, PERFIS_DISPONIVEIS } from './src/bench/corpus.js';
 import { rodarSeguranca } from './src/bench/seguranca.js';
+import { agrupar, contarDecisoes } from './src/core/lote.js';
 import { PRESETS, getPreset, guessProfile } from './src/core/presets.js';
 
 const cfg = loadConfig();
@@ -87,6 +88,8 @@ async function scan({ interactive }) {
   const limit = Number(flag('limit', 20));
   const rl = interactive ? readline.createInterface({ input: process.stdin, output: process.stdout }) : null;
   let done = 0, applied = 0, rejected = 0;
+  /** @type {any[]} */
+  const propostas = [];
 
   console.log(c.b(`\n  ${files.length} arquivo(s) solto(s). Olhando os primeiros ${Math.min(limit, files.length)}.\n`));
 
@@ -101,6 +104,7 @@ async function scan({ interactive }) {
     if (p.skip) { console.log(c.dim(`  -- ${path.basename(file)}: ${p.reason}`)); continue; }
 
     done++;
+    propostas.push(p);
     const conf = Math.round(p.confidence * 100);
     const color = conf >= 85 ? c.g : conf >= 60 ? c.y : c.r;
     console.log(`  ${c.dim(path.basename(file))}`);
@@ -124,7 +128,22 @@ async function scan({ interactive }) {
 
   rl?.close();
   console.log(c.b(`\n  ${done} analisados · ${applied} guardados · ${rejected} recusados`));
-  if (!interactive) console.log(c.dim('  (simulação. use `scan --apply` para decidir um por um)'));
+
+  // O numero que importa nao e quantos arquivos ele pergunta, e quantas DECISOES
+  // voce precisa tomar. Quinhentos clipes do mesmo cartao sao uma decisao.
+  if (propostas.length > 3) {
+    const d = contarDecisoes(propostas);
+    console.log('');
+    console.log(`  ${c.b(String(d.automaticos))} ele guardaria sozinho`);
+    console.log(`  ${c.b(String(d.arquivosQuePerguntariam))} arquivos precisam de voce — mas isso e so ${c.g(d.decisoes + ' decisao(oes)')}, nao ${d.arquivosQuePerguntariam}`);
+    if (d.fator > 1.5) console.log(c.dim(`  agrupamento reduziu as perguntas em ${d.fator}x`));
+    const { lotes } = agrupar(propostas.filter(p => p && !p.skip && (p.confidence || 0) < 0.8));
+    for (const l of lotes.slice(0, 6)) {
+      console.log(`    ${c.c('lote')} ${l.resumo}`);
+      console.log(`         ${c.dim('-> ' + l.folder + (l.slots.length ? '   (falta: ' + l.slots.join(', ') + ')' : ''))}`);
+    }
+  }
+  if (!interactive) console.log(c.dim('\n  (simulação. use `scan --apply` para decidir um por um)'));
   console.log('');
 }
 

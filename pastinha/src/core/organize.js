@@ -54,18 +54,45 @@ export function isProjectArea(file, cfg) {
   return z.podeMover ? null : (z.marcador || z.zona);
 }
 
-/** Extensoes dos irmaos de pasta. Barato: um readdir, sem stat de ninguem. */
+/**
+ * Extensoes dos irmaos de pasta, com cache por pasta.
+ *
+ * Sem cache isto e um readdir por ARQUIVO, e numa pasta com cem mil itens vira
+ * O(n^2): cem mil leituras de cem mil entradas. Numa pasta de capturas de tela
+ * de um jogador isso e exatamente o que acontece.
+ *
+ * Com cache e um readdir por PASTA. O histograma tambem nao precisa da pasta
+ * inteira: uma amostra de dois mil irmaos ja da a proporcao com folga.
+ */
+const VIZINHOS_VAZIO = { dominante: null, fracao: 0, total: 0 };
+/** @type {Map<string, {dominante:string|null, fracao:number, total:number}>} */
+const cacheVizinhos = new Map();
+
 function vizinhosDe(file) {
+  const dir = path.dirname(file);
+  const emCache = cacheVizinhos.get(dir);
+  if (emCache) return emCache;
+
+  let resultado = VIZINHOS_VAZIO;
   try {
-    const irmaos = fs.readdirSync(path.dirname(file)).filter(n => n !== path.basename(file));
-    return irmaos.length > 4000 ? gravidade(irmaos.slice(0, 4000)) : gravidade(irmaos);
-  } catch { return { dominante: null, fracao: 0, total: 0 }; }
+    const irmaos = fs.readdirSync(dir);
+    resultado = gravidade(irmaos.length > 2000 ? irmaos.slice(0, 2000) : irmaos);
+  } catch { /* sem permissao ou pasta sumiu */ }
+
+  // Trava de memoria: em disco gigante isto poderia crescer sem fim.
+  if (cacheVizinhos.size > 20000) cacheVizinhos.clear();
+  cacheVizinhos.set(dir, resultado);
+  return resultado;
 }
+
+/** So faz sentido em teste, ou depois de o usuario mexer no disco. */
+export function limparCacheVizinhos() { cacheVizinhos.clear(); }
 
 /**
  * @typedef {object} FileContext
  * @property {string} file @property {string} name @property {string} stem
  * @property {string} ext @property {number} size @property {Date} mtime
+ * @property {number} mtimeMs
  * @property {string|null} mime @property {string[]} whereFroms
  * @property {Date|null} downloadedAt
  * @property {{hint:string,confidence:number,note:string}|null} shape
@@ -86,6 +113,7 @@ export function gatherContext(file, cfg) {
     ext,
     size: st.size,
     mtime: st.mtime,
+    mtimeMs: st.mtimeMs,
     mime,
     whereFroms: platform.whereFroms(file),
     downloadedAt: platform.downloadedDate(file),
@@ -140,6 +168,7 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
     name: ctx.name,
     ext: ctx.ext,
     size: ctx.size,
+    mtimeMs: ctx.mtimeMs,
     mime: ctx.mime,
     source: ctx.whereFroms[0] || null,
     text: '',
