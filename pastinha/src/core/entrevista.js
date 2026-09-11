@@ -207,8 +207,15 @@ export function arvoreProposta(cfg, inventario = {}) {
     let out = molde;
     if (!cfg.arquivarPorAno) out = out.replace(/\/?\{ano\}/g, '');
     out = out.replace('{ano}', String(new Date().getFullYear()));
+    // Cada espaco ganha um exemplo DIFERENTE. Antes projeto e cliente
+    // recebiam o mesmo nome, e a arvore saia dizendo
+    // "Clientes/campanha-natal/Contratos", que nao e uma coisa que existe.
+    const usados = new Set();
     for (const chave of ['projeto', 'cliente', 'ensaio', 'episodio', 'marca', 'tema', 'stack', 'jogo']) {
-      out = out.replace(`{${chave}}`, instancias[0] || `<${chave}>`);
+      if (!out.includes(`{${chave}}`)) continue;
+      const livre = instancias.find(i => !usados.has(i));
+      if (livre) usados.add(livre);
+      out = out.replaceAll(`{${chave}}`, livre || `<${chave}>`);
     }
     return out;
   };

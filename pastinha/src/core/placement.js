@@ -184,7 +184,7 @@ export function colocar(tipo, { perfil = 'geral', aprendido = {}, ano = null, se
     // semPerfil existe só para o A/B do bench: simula o comportamento antigo,
     // uma taxonomia única para todo mundo.
     const doPerfil = semPerfil ? null : POR_PERFIL[perfil]?.[tipo];
-    if (doPerfil) { folder = doPerfil; via = `perfil:${perfil}`; confidence = 0.85; }
+    if (doPerfil) { folder = doPerfil; via = `perfil:${perfil}`; confidence = 0.88; }
     else if (GENERICO[tipo]) {
       folder = GENERICO[tipo];
       via = 'generico';
@@ -196,7 +196,7 @@ export function colocar(tipo, { perfil = 'geral', aprendido = {}, ano = null, se
       //
       // A incerteza de verdade ja esta capturada em dois lugares: na confianca
       // da propria regra, e na penalidade de destino que exige instancia.
-      confidence = perfil === 'geral' ? 0.85 : 0.78;
+      confidence = 0.85;
     }
   }
 

@@ -123,8 +123,13 @@ export function varrer({
         // demais nem funda demais. E daqui que saem "qual projeto" e
         // "qual cliente" — e a razao de nunca mais precisar perguntar do zero.
         const nomeSimples = e.name.toLowerCase();
+        // Pasta de ETAPA nao e instancia. "01-Captacao", "02_Audio",
+        // "03 Edicao" sao o esqueleto do projeto, nao o nome dele — e como
+        // sao elas que tem arquivo dentro, ganhavam de "campanha-natal" na
+        // contagem e apareciam na arvore proposta como se fossem o projeto.
+        const ehEtapa = /^\d{1,2}\s*[-_.\s]/.test(e.name);
         if (abaixo >= 5 && profundidade >= 1 && profundidade <= 4 &&
-            !GENERICA.has(nomeSimples) && !/^\d{4}$/.test(nomeSimples) &&
+            !GENERICA.has(nomeSimples) && !/^\d+$/.test(nomeSimples) && !ehEtapa &&
             e.name.length >= 3) {
           let mtimeMs = 0;
           try { mtimeMs = fs.statSync(cheio).mtimeMs; } catch { /* segue */ }

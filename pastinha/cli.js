@@ -413,9 +413,10 @@ async function comecar() {
     console.log(c.dim('     Não tem nada solto nas pastas que eu vigio. Limpo.\n'));
   } else {
     const propostas = [];
+    const esperando = [];
     for (const f of soltos.slice(0, 400)) {
       const est = isSettled(f, cfg);
-      if (!est.ok) continue;
+      if (!est.ok) { esperando.push({ f, why: est.why }); continue; }
       try { const p = await propose(f, cfg, tax, { noModel: !(await ollamaUp(cfg)).up }); if (p) propostas.push(p); }
       catch { /* segue */ }
     }
@@ -436,16 +437,35 @@ async function comecar() {
     if (protegidos.length) {
       console.log(`     ${c.b(String(protegidos.length))} eu não toco ${c.dim('(projeto, jogo, pacote ou biblioteca de aplicativo)')}`);
     }
+    // Dizer por que um arquivo ficou de fora. Silencio aqui faz o programa
+    // parecer quebrado justamente para quem acabou de baixar alguma coisa.
+    if (esperando.length) {
+      const chegando = esperando.filter(e => /mexeu há/.test(e.why));
+      if (chegando.length) {
+        console.log(`     ${c.b(String(chegando.length))} ainda chegando ${c.dim('(mexidos agora — pego eles no viver, em alguns segundos)')}`);
+      }
+      for (const e of esperando.filter(e => !/mexeu há/.test(e.why))) {
+        console.log(c.dim(`     -- ${path.basename(e.f)}: ${e.why}`));
+      }
+    }
 
     const vai = await pergunta(`\n  Executo? [enter = sim, n = não]  `);
     if (vai.toLowerCase() !== 'n') {
-      let feitos = 0;
+      let feitos = 0, adiados = 0;
       for (const p of bons) {
-        if ((p.confidence || 0) < 0.8 && cfg.autonomy === 0) continue;
+        // Com autonomia 0 so vai o que esta acima da barra. O resto nao some:
+        // vira decisao no 'scan --apply' e no 'viver'.
+        if ((p.confidence || 0) < cfg.autoThreshold && cfg.autonomy === 0) { adiados++; continue; }
         try { apply(p, cfg); feitos++; } catch { /* segue */ }
       }
       console.log(c.g(`\n     ${feitos} arquivos guardados.`));
-      console.log(c.dim(`     Mudou de ideia? ${c.c('node cli.js undo --today')} devolve tudo.`));
+      if (adiados) {
+        // Imprimir "0" e calar faz parecer que o programa nao funciona. Ele
+        // funcionou: voce pediu para ele perguntar, e ele esta perguntando.
+        console.log(c.dim(`     ${adiados} eu preferi não decidir sozinho — você escolheu "pergunta sempre".`));
+        console.log(`     ${c.c('node cli.js scan --apply')} decide um por um, agora.`);
+      }
+      if (feitos) console.log(c.dim(`     Mudou de ideia? ${c.c('node cli.js undo --today')} devolve tudo.`));
     }
   }
 
