@@ -18,6 +18,7 @@ import { buildSandbox } from './src/bench/sandbox.js';
 import { buildCorpus, PERFIS_DISPONIVEIS } from './src/bench/corpus.js';
 import { rodarSeguranca } from './src/bench/seguranca.js';
 import { agrupar, contarDecisoes } from './src/core/lote.js';
+import { proveniencia } from './src/core/journal.js';
 import { PRESETS, getPreset, guessProfile } from './src/core/presets.js';
 
 const cfg = loadConfig();
@@ -276,6 +277,31 @@ function perfilCmd() {
   console.log('');
 }
 
+function proveniencia_cmd(alvo) {
+  if (!alvo) return console.log('\n  uso: pastinha proveniencia "caminho/do/arquivo"\n');
+  const hits = journal.find(alvo, 1);
+  const caminho = fs.existsSync(alvo) ? path.resolve(alvo) : (hits[0] && hits[0].entry.to);
+  if (!caminho) return console.log(c.dim('\n  nao achei esse arquivo na memoria\n'));
+
+  const p = proveniencia(caminho);
+  if (!p) return console.log(c.dim('\n  esse arquivo nunca foi movido pelo bicho\n'));
+
+  console.log(c.b(`\n  ${path.basename(p.agora)}`));
+  console.log(c.dim(`  ${tilde(path.dirname(p.agora))}\n`));
+  console.log(`  antes se chamava .... ${c.c(p.nomeOriginal)}`);
+  console.log(`  e morava em ......... ${c.c(tilde(p.pastaOriginal))}`);
+  if (p.chegouEm) console.log(`  chegou em ........... ${p.chegouEm.slice(0, 10)}`);
+  if (p.veioDe) console.log(`  veio de ............. ${c.dim(String(p.veioDe).slice(0, 66))}`);
+  if (p.aPastaEraFeitaDe) console.log(`  a pasta era .......... ${c.dim(p.aPastaEraFeitaDe)}`);
+  if (p.estavaAoLadoDe.length) {
+    console.log(`  estava ao lado de ....`);
+    for (const v of p.estavaAoLadoDe.slice(0, 6)) console.log(`      ${c.dim(v.slice(0, 60))}`);
+    if (p.estavaAoLadoDe.length > 6) console.log(c.dim(`      e mais ${p.estavaAoLadoDe.length - 6}`));
+  }
+  console.log(`  tipo ................. ${p.tipo || '?'}   ${c.dim('(' + (p.decididoPor || '?') + ')')}`);
+  console.log(c.dim(`\n  a ordem original nao foi destruida — ela mora aqui.\n`));
+}
+
 const HELP = `
   ${c.b('pastinha')} — um bicho com TOC de arrumação          ${c.dim(platform.label)}
 
@@ -290,6 +316,8 @@ const HELP = `
   ${c.c('node cli.js scan')}           simula: o que ele faria. não move nada
   ${c.c('node cli.js scan --apply')}   decide um por um, no terminal
   ${c.c('node cli.js find "..."')}     busca por nome novo, nome antigo, conteúdo e origem
+  ${c.c('node cli.js proveniencia "..."')}  tudo o que o arquivo ja foi: nome antigo,
+                             pasta antiga, com quem estava, de onde veio
   ${c.c('node cli.js undo')}           desfaz o último  ${c.dim('(--today desfaz o dia)')}
   ${c.c('node cli.js stats')}          os números que decidem o projeto
   ${c.c('node cli.js server')}         sobe o motor e o bicho em http://127.0.0.1:${cfg.port}
@@ -313,6 +341,7 @@ try {
       break;
     }
     case 'perfil': perfilCmd(); break;
+    case 'proveniencia': proveniencia_cmd(args.slice(1).filter(a => !a.startsWith('--')).join(' ')); break;
     case 'live': live(); break;
     case 'scan': await scan({ interactive: has('apply') }); break;
     case 'find': find(args.slice(1).filter(a => !a.startsWith('--')).join(' ')); break;

@@ -336,6 +336,26 @@ export function apply(proposal, cfg, { dryRun = false } = {}) {
 
   if (dryRun) return { ...proposal, to, applied: false, dryRun: true };
 
+  // Proveniencia, no sentido arquivistico.
+  //
+  // A arquivologia tem um principio de mais de um seculo chamado respeito a
+  // ordem original: o arranjo que o criador deu aos documentos E informacao, e
+  // desfaze-lo destroi evidencia. Pela norma, um organizador automatico de
+  // arquivos e um vandalo.
+  //
+  // A saida nao e deixar de organizar — e nao PERDER a ordem original ao
+  // organizar. Entao, antes de mover, o diario registra de onde o arquivo veio,
+  // como se chamava, quando chegou e ao lado de que ele estava. O arranjo deixa
+  // de morar no sistema de arquivos e passa a morar no indice, onde continua
+  // consultavel e onde nao atrapalha ninguem.
+  const vizinhos = vizinhosDe(proposal.file);
+  let amostraVizinhos = [];
+  try {
+    amostraVizinhos = fs.readdirSync(path.dirname(proposal.file))
+      .filter(n => n !== path.basename(proposal.file))
+      .slice(0, 20);
+  } catch { /* pasta sumiu */ }
+
   const rec = journal.append({
     op: 'move',
     id: proposal.id,
@@ -343,6 +363,14 @@ export function apply(proposal, cfg, { dryRun = false } = {}) {
     to,
     fromName: path.basename(proposal.file),
     toName: path.basename(to),
+    ordemOriginal: {
+      pasta: path.dirname(proposal.file),
+      vizinhos: amostraVizinhos,
+      predominante: vizinhos.dominante,
+      fracaoPredominante: +(vizinhos.fracao || 0).toFixed(2),
+      totalNaPasta: vizinhos.total,
+      chegouEm: proposal.mtimeMs ? new Date(proposal.mtimeMs).toISOString() : null
+    },
     hash: journal.sha1File(proposal.file),
     size: proposal.size,
     category: proposal.folder,

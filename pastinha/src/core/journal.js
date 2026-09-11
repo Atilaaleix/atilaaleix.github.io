@@ -127,3 +127,32 @@ export function find(query, limit = 20) {
   }
   return results.sort((a, b) => b.score - a.score).slice(0, limit);
 }
+
+/**
+ * Proveniencia completa de um arquivo: tudo o que ele ja foi.
+ *
+ * E a resposta ao principio arquivistico de respeito a ordem original. O arranjo
+ * antigo nao foi destruido — foi movido para ca, e continua consultavel.
+ *
+ * @param {string} caminhoAtual
+ */
+export function proveniencia(caminhoAtual) {
+  const cadeia = history(caminhoAtual);
+  if (!cadeia.length) return null;
+  const primeiro = cadeia[0];
+  const ultimo = cadeia[cadeia.length - 1];
+  return {
+    agora: ultimo.to,
+    nomeOriginal: primeiro.fromName,
+    pastaOriginal: primeiro.ordemOriginal ? primeiro.ordemOriginal.pasta : path.dirname(primeiro.from),
+    estavaAoLadoDe: primeiro.ordemOriginal ? primeiro.ordemOriginal.vizinhos : [],
+    aPastaEraFeitaDe: primeiro.ordemOriginal
+      ? `${Math.round((primeiro.ordemOriginal.fracaoPredominante || 0) * 100)}% ${primeiro.ordemOriginal.predominante || '?'} de ${primeiro.ordemOriginal.totalNaPasta} arquivos`
+      : null,
+    chegouEm: primeiro.ordemOriginal ? primeiro.ordemOriginal.chegouEm : null,
+    veioDe: primeiro.source || null,
+    tipo: ultimo.tipo || null,
+    decididoPor: ultimo.decidedBy || null,
+    mudancas: cadeia.map(m => ({ quando: m.ts, de: m.fromName, para: m.toName, pasta: m.category }))
+  };
+}
