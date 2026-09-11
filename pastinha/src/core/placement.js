@@ -165,6 +165,7 @@ export function slotsDe(folder) {
  * @property {string[]} slots    espaços que precisam ser preenchidos
  * @property {boolean} precisaInstancia
  * @property {number} confidence
+ * @property {number} confiancaSemSlot  a confianca se a instancia for resolvida
  * @property {string} via        de onde veio a decisão
  */
 
@@ -199,7 +200,7 @@ export function colocar(tipo, { perfil = 'geral', aprendido = {}, ano = null, se
     }
   }
 
-  if (!folder) return { folder: 'Triagem', slots: [], precisaInstancia: false, confidence: 0.2, via: 'sem-mapa' };
+  if (!folder) return { folder: 'Triagem', slots: [], precisaInstancia: false, confidence: 0.2, confiancaSemSlot: 0.2, via: 'sem-mapa' };
 
   // {ano} só é preenchido quando o ano é SABIDO — EXIF da foto, data dentro do
   // documento. Nunca a data do arquivo em disco.
@@ -215,6 +216,11 @@ export function colocar(tipo, { perfil = 'geral', aprendido = {}, ano = null, se
     folder,
     slots,
     precisaInstancia: slots.length > 0,
+    // Guardada separada porque a penalidade abaixo existe SO enquanto o espaco
+    // esta vazio. Quando alguem descobre qual e o projeto, a penalidade tem que
+    // sair — continuar aplicando faz o arquivo que CARREGA o nome do projeto no
+    // titulo ficar menos confiante que o que nao carrega nada.
+    confiancaSemSlot: confidence,
     // Destino que exige escolher um projeto ou um ensaio NÃO é uma decisão
     // confiante — é uma pergunta. Rebaixar aqui é o que impede o bicho de
     // enfiar o vídeo no projeto errado com 90% de certeza.

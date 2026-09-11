@@ -104,7 +104,9 @@ const EXT_AMBIGUA = [
 const NAME_RULES = [
   { re: /^(screenshot|captura de tela|screen shot|cleanshot)/i, tipo: 'captura', conf: 0.96, name: 'captura-de-tela', contentSafe: false },
   { re: /^(img|dsc|dscn|dscf|p\d{7}|pxl)[_-]?\d{3,}/i, tipo: 'foto-camera', conf: 0.9, contentSafe: false, soImagem: true },
-  { re: /^(gx|gh|go?pr|dji|c|a\d{2}|mvi|clip)[_-]?\d{3,}/i, tipo: 'video-bruto', conf: 0.86, contentSafe: false, soVideo: true },
+  // Camera de video numera por rolo: A001, B0012, C0451. Multicam usa uma letra
+  // por camera, entao a lista tem que cobrir A ate D, nao so alguns prefixos.
+  { re: /^([a-d]\d{3,}|gx|gh|go?pr|dji|mvi|clip|c\d{3,})[_-]?\d{0,}/i, tipo: 'video-bruto', conf: 0.86, contentSafe: false, soVideo: true },
   { re: /^(whatsapp|whats)[ _-]?(image|video|audio|ptt)/i, tipo: 'foto-whatsapp', conf: 0.94, contentSafe: false },
   { re: /\b(boleto|fatura|invoice)\b/i, tipo: 'fatura', conf: 0.9 },
   { re: /\b(recibo|nota[ _-]?fiscal|nfe|danfe|comprovante|pix)\b/i, tipo: 'nota-fiscal', conf: 0.88 },

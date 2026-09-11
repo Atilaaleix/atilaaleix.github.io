@@ -104,13 +104,16 @@ export function limparCacheVizinhos() { cacheVizinhos.clear(); }
 
 /** @returns {FileContext|null} */
 export function gatherContext(file, cfg) {
-  const ext = path.extname(file).toLowerCase();
+  const extOriginal = path.extname(file);
+  const ext = extOriginal.toLowerCase();
   let st; try { st = fs.statSync(file); } catch { return null; }
   const mime = sniff(file);
   return {
     file,
     name: path.basename(file),
-    stem: path.basename(file, ext),
+    // Com a extensao ja minusculada, basename nao corta ".MP4" e o nome virava
+    // "b110019-mp4". Camera grava em maiuscula: isso acontecia o tempo todo.
+    stem: path.basename(file, extOriginal),
     ext,
     size: st.size,
     mtime: st.mtime,
@@ -232,9 +235,9 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
         proposal.folder = preencher(posto.folder, res.valores);
         proposal.slots = [];
         proposal.precisaInstancia = false;
-        // A confianca final nao pode passar da confianca de ter acertado a
-        // instancia: saber que e um clipe nao adianta se o projeto estiver errado.
-        posto.confidence = Math.min(posto.confidence, res.confianca);
+        // Levanta a penalidade do espaco vazio e recalcula: o teto agora e a
+        // confianca de ter acertado a instancia, nao mais o castigo de nao saber.
+        posto.confidence = Math.min(posto.confiancaSemSlot, res.confianca);
         posto.via += `+instancia(${res.porque})`;
       }
     }

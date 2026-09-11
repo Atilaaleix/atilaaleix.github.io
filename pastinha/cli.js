@@ -17,8 +17,11 @@ import { runBench, printReport } from './src/bench/groundtruth.js';
 import { buildSandbox } from './src/bench/sandbox.js';
 import { buildCorpus, PERFIS_DISPONIVEIS } from './src/bench/corpus.js';
 import { rodarSeguranca } from './src/bench/seguranca.js';
-import { agrupar, contarDecisoes } from './src/core/lote.js';
+import { agrupar, contarDecisoes, aplicarHeranca } from './src/core/lote.js';
 import { proveniencia } from './src/core/journal.js';
+import { varrer, diagnostico } from './src/core/varredura.js';
+import { montar, aplicar as aplicarRespostas, arvoreProposta } from './src/core/entrevista.js';
+import { ensureFolder } from './src/core/folders.js';
 import { PRESETS, getPreset, guessProfile } from './src/core/presets.js';
 
 const cfg = loadConfig();
@@ -302,10 +305,219 @@ function proveniencia_cmd(alvo) {
   console.log(c.dim(`\n  a ordem original nao foi destruida — ela mora aqui.\n`));
 }
 
+
+// ---------------------------------------------------------------------------
+// comecar: a primeira vez. Um comando so, do zero ao bicho vivo.
+// ---------------------------------------------------------------------------
+async function comecar() {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+  // Se a entrada acabar (terminal fechado, respostas canalizadas, execucao em
+  // script), readline nunca resolve e o programa fica pendurado para sempre.
+  // Entao: fim da entrada vale como "aceito o padrao".
+  let entradaAcabou = has('padroes');
+  rl.on('close', () => { entradaAcabou = true; });
+  const pergunta = async (t) => {
+    if (entradaAcabou) { console.log(t.trimEnd()); return ''; }
+    const resposta = await Promise.race([
+      rl.question(t),
+      new Promise(res => rl.once('close', () => res('')))
+    ]);
+    return String(resposta).trim();
+  };
+
+  console.log(c.b('\n  Pastinha\n'));
+  console.log('  Vou olhar o seu computador, fazer umas perguntas, e propor uma arrumação.');
+  console.log(c.dim('  Nada é movido sem você ver e aprovar. Nada sai desta máquina.\n'));
+
+  const perm = platform.permissionCheck();
+  if (!perm.ok) {
+    console.log(c.r('  Não consigo ler suas pastas.'));
+    console.log(c.dim('  ' + perm.hint + '\n'));
+    rl.close(); return;
+  }
+
+  // --- 1. varredura -------------------------------------------------------
+  console.log(c.b('  1. Olhando o disco') + c.dim('  (só leitura: nome, tamanho e data. Não abro nenhum arquivo.)\n'));
+  let ultimo = '';
+  const inv = varrer({
+    aoProgredir: (n, onde) => {
+      const curto = tilde(onde).slice(0, 54);
+      if (curto !== ultimo) {
+        ultimo = curto;
+        process.stdout.write(`\r     ${String(n).padStart(7)} arquivos  ${curto.padEnd(56)}`);
+      }
+    }
+  });
+  process.stdout.write('\r' + ' '.repeat(78) + '\r');
+
+  const diag = diagnostico(inv);
+  console.log(c.g(`     pronto em ${inv.segundos}s\n`));
+  for (const l of diag.linhas) console.log('     ' + l);
+  if (inv.truncada) console.log(c.y('     (parei no limite; o suficiente para decidir)'));
+  console.log('');
+  console.log(`  ${c.b('Seu disco parece de ' + diag.perfil.preset.label.toLowerCase())}` +
+    c.dim(`  (confiança ${diag.perfil.confianca})`));
+  if (diag.perfil.porque && diag.perfil.porque.length) {
+    console.log(c.dim('     porque: ' + diag.perfil.porque.slice(0, 3).join(', ')));
+  }
+
+  // --- 2. perguntas -------------------------------------------------------
+  const perguntas = montar({ perfil: diag.perfil, inventario: inv });
+  console.log(c.b(`\n  2. ${perguntas.length} perguntas`) + c.dim('  (enter aceita o padrão · "?" explica por que eu pergunto)\n'));
+
+  /** @type {Record<string,string>} */
+  const respostas = {};
+  for (let i = 0; i < perguntas.length; i++) {
+    const q = perguntas[i];
+    for (;;) {
+      console.log(`  ${c.c(String(i + 1) + '.')} ${q.texto}`);
+      if (q.opcoes) {
+        q.opcoes.forEach((o, n) => {
+          const marca = o.valor === q.padrao ? c.g('>') : ' ';
+          console.log(`     ${marca} ${c.b(String(n + 1))} ${o.rotulo}` + (o.detalhe ? c.dim('  — ' + o.detalhe) : ''));
+        });
+      }
+      const r = await pergunta('     ');
+      if (r === '?') { console.log(c.dim('\n     ' + (q.porque || 'sem explicação') + '\n')); continue; }
+      if (!r) { respostas[q.id] = q.padrao; break; }
+      if (q.opcoes) {
+        const n = Number(r);
+        if (n >= 1 && n <= q.opcoes.length) { respostas[q.id] = q.opcoes[n - 1].valor; break; }
+        const porNome = q.opcoes.find(o => o.valor === r || o.rotulo.startsWith(r.toLowerCase()));
+        if (porNome) { respostas[q.id] = porNome.valor; break; }
+        console.log(c.y('     não entendi, escolhe um número\n')); continue;
+      }
+      respostas[q.id] = r; break;
+    }
+    console.log('');
+  }
+
+  aplicarRespostas(perguntas, respostas, cfg);
+  saveConfig(cfg);
+
+  // --- 3. a arvore proposta ------------------------------------------------
+  const arvore = arvoreProposta(cfg, inv);
+  console.log(c.b('  3. A estrutura que eu proponho\n'));
+  for (const p of arvore.slice(0, 26)) console.log('     ' + c.c(tilde(cfg.destRoot)) + '/' + p);
+  if (arvore.length > 26) console.log(c.dim(`     e mais ${arvore.length - 26}`));
+  console.log(c.dim('\n     As pastas só nascem quando um arquivo precisar delas.'));
+  const ok = await pergunta('\n  Pode ser? [enter = sim, n = recomeçar as perguntas]  ');
+  if (ok.toLowerCase() === 'n') { rl.close(); return comecar(); }
+
+  // --- 4. simulacao --------------------------------------------------------
+  console.log(c.b('\n  4. O que eu faria agora, sem mover nada\n'));
+  const tax = loadTaxonomy(cfg);
+  const soltos = listLoose(cfg);
+  if (!soltos.length) {
+    console.log(c.dim('     Não tem nada solto nas pastas que eu vigio. Limpo.\n'));
+  } else {
+    const propostas = [];
+    for (const f of soltos.slice(0, 400)) {
+      const est = isSettled(f, cfg);
+      if (!est.ok) continue;
+      try { const p = await propose(f, cfg, tax, { noModel: !(await ollamaUp(cfg)).up }); if (p) propostas.push(p); }
+      catch { /* segue */ }
+    }
+    aplicarHeranca(propostas);
+    const bons = propostas.filter(p => p && !p.skip && p.folder);
+    const protegidos = propostas.filter(p => p && p.skip);
+    const d = contarDecisoes(propostas);
+
+    for (const p of bons.slice(0, 12)) {
+      console.log(`     ${c.dim(p.name.slice(0, 44))}`);
+      console.log(`       ${c.c('→')} ${c.b(p.folder + '/')}${p.newName}  ${c.dim(Math.round(p.confidence * 100) + '%')}`);
+    }
+    if (bons.length > 12) console.log(c.dim(`     e mais ${bons.length - 12}\n`));
+
+    console.log('');
+    console.log(`     ${c.b(String(d.automaticos))} eu guardo sozinho`);
+    console.log(`     ${c.b(String(d.arquivosQuePerguntariam))} precisam de você — mas são só ${c.g(d.decisoes + ' decisões')}, não ${d.arquivosQuePerguntariam}`);
+    if (protegidos.length) {
+      console.log(`     ${c.b(String(protegidos.length))} eu não toco ${c.dim('(projeto, jogo, pacote ou biblioteca de aplicativo)')}`);
+    }
+
+    const vai = await pergunta(`\n  Executo? [enter = sim, n = não]  `);
+    if (vai.toLowerCase() !== 'n') {
+      let feitos = 0;
+      for (const p of bons) {
+        if ((p.confidence || 0) < 0.8 && cfg.autonomy === 0) continue;
+        try { apply(p, cfg); feitos++; } catch { /* segue */ }
+      }
+      console.log(c.g(`\n     ${feitos} arquivos guardados.`));
+      console.log(c.dim(`     Mudou de ideia? ${c.c('node cli.js undo --today')} devolve tudo.`));
+    }
+  }
+
+  // --- 5. daqui pra frente -------------------------------------------------
+  console.log(c.b('\n  5. Daqui pra frente\n'));
+  console.log(`     ${c.c('node cli.js viver')}           deixa ele vivo, organizando o que chegar`);
+  console.log(`     ${c.c('node cli.js achar "contrato"')}  procura um arquivo`);
+  console.log(`     ${c.c('node cli.js undo --today')}      desfaz tudo de hoje`);
+  console.log(`     ${c.c('node cli.js proveniencia "..."')}  de onde veio, como se chamava`);
+  console.log(c.dim(`\n     config em ${tilde(CONFIG_PATH)}  ·  memória em ${tilde(JOURNAL_PATH)}\n`));
+  rl.close();
+}
+
+// ---------------------------------------------------------------------------
+// viver: fica rodando e organiza o que chegar.
+// ---------------------------------------------------------------------------
+async function viver() {
+  const intervalo = Number(flag('intervalo', 15)) * 1000;
+  const auto = cfg.autonomy > 0 || has('auto');
+  console.log(c.b('\n  Pastinha vivo.') + c.dim(`  vigiando ${cfg.watch.map(tilde).join(' e ')}`));
+  console.log(c.dim(`  ${auto ? 'guardando sozinho o que eu tiver certeza' : 'só proponho, não movo nada'} · ctrl+c para parar\n`));
+
+  const vistos = new Set(listLoose(cfg));
+  const o = await ollamaUp(cfg);
+  let tax = loadTaxonomy(cfg);
+  let desdeTaxonomia = Date.now();
+
+  for (;;) {
+    await new Promise(r => setTimeout(r, intervalo));
+    if (Date.now() - desdeTaxonomia > 600000) { tax = loadTaxonomy(cfg); desdeTaxonomia = Date.now(); }
+
+    const agora = listLoose(cfg);
+    const novos = agora.filter(f => !vistos.has(f));
+    for (const f of agora) vistos.add(f);
+    if (!novos.length) continue;
+
+    const propostas = [];
+    for (const f of novos) {
+      const est = isSettled(f, cfg);
+      if (!est.ok) { vistos.delete(f); continue; }   // ainda chegando: volta na proxima
+      try { const p = await propose(f, cfg, tax, { noModel: !o.up }); if (p) propostas.push(p); }
+      catch { /* segue */ }
+    }
+    aplicarHeranca(propostas);
+
+    for (const p of propostas) {
+      if (!p || p.skip) {
+        if (p && p.skip) console.log(c.dim(`  — ${path.basename(p.file)}: ${p.reason}`));
+        continue;
+      }
+      const conf = Math.round((p.confidence || 0) * 100);
+      if (auto && (p.confidence || 0) >= cfg.autoThreshold && !p.precisaInstancia) {
+        try {
+          const res = apply(p, cfg);
+          journal.append({ op: 'decision', of: p.id, accepted: true, auto: true });
+          console.log(`  ${c.g('guardei')} ${p.name.slice(0, 40)}  ${c.c('→')} ${p.folder}/  ${c.dim(conf + '%')}`);
+        } catch (e) { console.log(c.r(`  !! ${p.name}: ${e.message}`)); }
+      } else {
+        console.log(`  ${c.y('vi')} ${p.name.slice(0, 40)}  ${c.dim('→ ' + p.folder + '/  ' + conf + '%')}`);
+      }
+    }
+  }
+}
+
 const HELP = `
   ${c.b('pastinha')} — um bicho com TOC de arrumação          ${c.dim(platform.label)}
 
-  ${c.c('node cli.js sandbox')}        caixa de areia com bagunça de mentira. comece por aqui
+  ${c.b('node cli.js comecar')}       ${c.b('a primeira vez: varre, pergunta, propõe, executa')}
+  ${c.c('node cli.js viver')}          fica rodando e organiza o que chegar
+  ${c.c('node cli.js achar "..."')}    procura um arquivo
+
+  ${c.c('node cli.js sandbox')}        caixa de areia com bagunça de mentira, sem risco
   ${c.c('node cli.js doctor')}         vê se a máquina está pronta
   ${c.c('node cli.js corpus --perfil fotografo --n 20000')}
                              corpus em massa de um perfil, com gabarito
@@ -324,6 +536,7 @@ const HELP = `
   ${c.c('node cli.js live')}           aponta para os seus arquivos de verdade
 
   bandeiras: --no-model  --apply  --dry-run  --limit N  --root CAMINHO  --n N  --perfil NOME
+             --padroes (aceita todas as respostas padrao, sem perguntar)
   perfis: ${PERFIS_DISPONIVEIS.join(' · ')}
 
   config  ${tilde(CONFIG_PATH)}
@@ -333,6 +546,9 @@ const HELP = `
 try {
   switch (cmd) {
     case 'doctor': await doctor(); break;
+    case 'comecar': await comecar(); break;
+    case 'viver': await viver(); break;
+    case 'achar': find(args.slice(1).filter(a => !a.startsWith('--')).join(' ')); break;
     case 'sandbox': sandbox(); break;
     case 'corpus': corpus(); break;
     case 'seguranca': {
