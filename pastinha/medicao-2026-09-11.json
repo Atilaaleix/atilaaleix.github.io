@@ -1,0 +1,643 @@
+{
+  "resumo": {
+    "arquivos": 219993,
+    "pastas": 4538,
+    "minutos": 3.4,
+    "antes": 23.5,
+    "raiz": 81.1,
+    "estrutural": 71.2,
+    "age": 97.3,
+    "perfisOk": 10,
+    "perfis": 11,
+    "errosConfiantesTotal": 0,
+    "soltosTotal": 3300,
+    "perguntariamTotal": 2471,
+    "decisoesTotal": 63,
+    "geraPorS": 2504,
+    "clsPorS": 145.6,
+    "rssMb": 216,
+    "seguranca": {
+      "passou": true,
+      "falhasGraves": 0,
+      "falsosPositivos": 0,
+      "acompanhante": true,
+      "protegidos": 15,
+      "moveis": 5
+    },
+    "quemDecidiu": {
+      "nome": {
+        "n": 3721,
+        "top": 3093
+      },
+      "conteudo+sem-mapa": {
+        "n": 37,
+        "top": 12
+      },
+      "origem": {
+        "n": 273,
+        "top": 221
+      },
+      "exif": {
+        "n": 54,
+        "top": 39
+      },
+      "mime": {
+        "n": 283,
+        "top": 83
+      },
+      "ext": {
+        "n": 1788,
+        "top": 1652
+      },
+      "ext-ambigua": {
+        "n": 224,
+        "top": 159
+      },
+      "conteudo+generico": {
+        "n": 48,
+        "top": 48
+      },
+      "forma": {
+        "n": 136,
+        "top": 37
+      },
+      "fallback": {
+        "n": 21,
+        "top": 0
+      },
+      "conteudo+perfil": {
+        "n": 15,
+        "top": 7
+      }
+    }
+  },
+  "perfis": [
+    {
+      "persona": "geral",
+      "perfilOk": false,
+      "antes": 76.7,
+      "raiz": 76.7,
+      "estrutural": 67.3,
+      "age": 97.6,
+      "instanciaPreenchida": "—",
+      "instanciaAcerto": "—",
+      "errosConfiantes": 0,
+      "arquivosSoltos": 300,
+      "automaticos": 148,
+      "perguntariam": 152,
+      "decisoes": 24,
+      "fator": 6.3,
+      "clsPorS": 229,
+      "geraPorS": 9720,
+      "pastas": 41,
+      "arquivos": 19994,
+      "porQuem": {
+        "nome": {
+          "n": 409,
+          "exact": 264,
+          "top": 320
+        },
+        "conteudo+sem-mapa": {
+          "n": 26,
+          "exact": 12,
+          "top": 12
+        },
+        "origem": {
+          "n": 11,
+          "exact": 2,
+          "top": 2
+        },
+        "exif": {
+          "n": 25,
+          "exact": 25,
+          "top": 25
+        },
+        "mime": {
+          "n": 46,
+          "exact": 46,
+          "top": 46
+        },
+        "ext": {
+          "n": 31,
+          "exact": 19,
+          "top": 19
+        },
+        "ext-ambigua": {
+          "n": 11,
+          "exact": 9,
+          "top": 9
+        },
+        "conteudo+generico": {
+          "n": 20,
+          "exact": 20,
+          "top": 20
+        },
+        "forma": {
+          "n": 18,
+          "exact": 7,
+          "top": 7
+        },
+        "fallback": {
+          "n": 3,
+          "exact": 0,
+          "top": 0
+        }
+      }
+    },
+    {
+      "persona": "designer",
+      "perfilOk": true,
+      "antes": 21.3,
+      "raiz": 74,
+      "estrutural": 66.2,
+      "age": 100,
+      "instanciaPreenchida": "100.0%",
+      "instanciaAcerto": "100.0%",
+      "errosConfiantes": 0,
+      "arquivosSoltos": 300,
+      "automaticos": 55,
+      "perguntariam": 245,
+      "decisoes": 3,
+      "fator": 81.7,
+      "clsPorS": 148,
+      "geraPorS": 3682,
+      "pastas": 56,
+      "arquivos": 19998,
+      "porQuem": {
+        "nome": {
+          "n": 283,
+          "exact": 133,
+          "top": 229
+        },
+        "ext": {
+          "n": 129,
+          "exact": 82,
+          "top": 129
+        },
+        "forma": {
+          "n": 40,
+          "exact": 0,
+          "top": 0
+        },
+        "origem": {
+          "n": 93,
+          "exact": 12,
+          "top": 74
+        },
+        "ext-ambigua": {
+          "n": 12,
+          "exact": 1,
+          "top": 12
+        },
+        "mime": {
+          "n": 37,
+          "exact": 0,
+          "top": 0
+        },
+        "conteudo+sem-mapa": {
+          "n": 6,
+          "exact": 0,
+          "top": 0
+        }
+      }
+    },
+    {
+      "persona": "videomaker",
+      "perfilOk": true,
+      "antes": 6.3,
+      "raiz": 75.2,
+      "estrutural": 63,
+      "age": 100,
+      "instanciaPreenchida": "100.0%",
+      "instanciaAcerto": "100.0%",
+      "errosConfiantes": 0,
+      "arquivosSoltos": 300,
+      "automaticos": 38,
+      "perguntariam": 262,
+      "decisoes": 4,
+      "fator": 65.5,
+      "clsPorS": 143,
+      "geraPorS": 2838,
+      "pastas": 73,
+      "arquivos": 19999,
+      "porQuem": {
+        "nome": {
+          "n": 477,
+          "exact": 82,
+          "top": 362
+        },
+        "ext-ambigua": {
+          "n": 50,
+          "exact": 0,
+          "top": 28
+        },
+        "ext": {
+          "n": 52,
+          "exact": 28,
+          "top": 52
+        },
+        "origem": {
+          "n": 18,
+          "exact": 2,
+          "top": 9
+        },
+        "forma": {
+          "n": 3,
+          "exact": 0,
+          "top": 0
+        }
+      }
+    },
+    {
+      "persona": "fotografo",
+      "perfilOk": true,
+      "antes": 5.5,
+      "raiz": 69.2,
+      "estrutural": 68.5,
+      "age": 100,
+      "instanciaPreenchida": "0.0%",
+      "instanciaAcerto": "—",
+      "errosConfiantes": 0,
+      "arquivosSoltos": 300,
+      "automaticos": 0,
+      "perguntariam": 300,
+      "decisoes": 2,
+      "fator": 150,
+      "clsPorS": 101,
+      "geraPorS": 1894,
+      "pastas": 3521,
+      "arquivos": 20000,
+      "porQuem": {
+        "mime": {
+          "n": 125,
+          "exact": 0,
+          "top": 0
+        },
+        "ext": {
+          "n": 303,
+          "exact": 3,
+          "top": 303
+        },
+        "exif": {
+          "n": 29,
+          "exact": 0,
+          "top": 14
+        },
+        "nome": {
+          "n": 143,
+          "exact": 30,
+          "top": 98
+        }
+      }
+    },
+    {
+      "persona": "programador",
+      "perfilOk": true,
+      "antes": 80.2,
+      "raiz": 94.8,
+      "estrutural": 91,
+      "age": 100,
+      "instanciaPreenchida": "0.0%",
+      "instanciaAcerto": "—",
+      "errosConfiantes": 0,
+      "arquivosSoltos": 300,
+      "automaticos": 70,
+      "perguntariam": 230,
+      "decisoes": 11,
+      "fator": 20.9,
+      "clsPorS": 130,
+      "geraPorS": 2605,
+      "pastas": 26,
+      "arquivos": 20001,
+      "porQuem": {
+        "ext": {
+          "n": 354,
+          "exact": 81,
+          "top": 339
+        },
+        "nome": {
+          "n": 120,
+          "exact": 117,
+          "top": 120
+        },
+        "origem": {
+          "n": 43,
+          "exact": 18,
+          "top": 38
+        },
+        "ext-ambigua": {
+          "n": 11,
+          "exact": 11,
+          "top": 11
+        },
+        "conteudo+generico": {
+          "n": 28,
+          "exact": 28,
+          "top": 28
+        },
+        "mime": {
+          "n": 26,
+          "exact": 26,
+          "top": 26
+        },
+        "conteudo+perfil": {
+          "n": 15,
+          "exact": 7,
+          "top": 7
+        },
+        "conteudo+sem-mapa": {
+          "n": 3,
+          "exact": 0,
+          "top": 0
+        }
+      }
+    },
+    {
+      "persona": "artista3d",
+      "perfilOk": true,
+      "antes": 9,
+      "raiz": 81.2,
+      "estrutural": 77.2,
+      "age": 100,
+      "instanciaPreenchida": "100.0%",
+      "instanciaAcerto": "100.0%",
+      "errosConfiantes": 0,
+      "arquivosSoltos": 300,
+      "automaticos": 32,
+      "perguntariam": 268,
+      "decisoes": 4,
+      "fator": 67,
+      "clsPorS": 135,
+      "geraPorS": 2303,
+      "pastas": 87,
+      "arquivos": 19998,
+      "porQuem": {
+        "nome": {
+          "n": 147,
+          "exact": 40,
+          "top": 105
+        },
+        "ext": {
+          "n": 394,
+          "exact": 50,
+          "top": 345
+        },
+        "forma": {
+          "n": 29,
+          "exact": 1,
+          "top": 16
+        },
+        "origem": {
+          "n": 21,
+          "exact": 3,
+          "top": 21
+        },
+        "ext-ambigua": {
+          "n": 9,
+          "exact": 0,
+          "top": 0
+        }
+      }
+    },
+    {
+      "persona": "motion",
+      "perfilOk": true,
+      "antes": 12.7,
+      "raiz": 75.3,
+      "estrutural": 47.3,
+      "age": 100,
+      "instanciaPreenchida": "100.0%",
+      "instanciaAcerto": "100.0%",
+      "errosConfiantes": 0,
+      "arquivosSoltos": 300,
+      "automaticos": 217,
+      "perguntariam": 83,
+      "decisoes": 1,
+      "fator": 83,
+      "clsPorS": 160,
+      "geraPorS": 2061,
+      "pastas": 69,
+      "arquivos": 20003,
+      "porQuem": {
+        "nome": {
+          "n": 424,
+          "exact": 156,
+          "top": 357
+        },
+        "mime": {
+          "n": 26,
+          "exact": 0,
+          "top": 0
+        },
+        "ext": {
+          "n": 60,
+          "exact": 1,
+          "top": 20
+        },
+        "origem": {
+          "n": 33,
+          "exact": 5,
+          "top": 33
+        },
+        "ext-ambigua": {
+          "n": 38,
+          "exact": 0,
+          "top": 33
+        },
+        "forma": {
+          "n": 19,
+          "exact": 9,
+          "top": 9
+        }
+      }
+    },
+    {
+      "persona": "musico",
+      "perfilOk": true,
+      "antes": 5.8,
+      "raiz": 93.3,
+      "estrutural": 89.7,
+      "age": 92.3,
+      "instanciaPreenchida": "0.0%",
+      "instanciaAcerto": "—",
+      "errosConfiantes": 0,
+      "arquivosSoltos": 300,
+      "automaticos": 0,
+      "perguntariam": 300,
+      "decisoes": 5,
+      "fator": 60,
+      "clsPorS": 146,
+      "geraPorS": 2129,
+      "pastas": 56,
+      "arquivos": 20001,
+      "porQuem": {
+        "nome": {
+          "n": 502,
+          "exact": 165,
+          "top": 474
+        },
+        "ext": {
+          "n": 86,
+          "exact": 60,
+          "top": 86
+        },
+        "ext-ambigua": {
+          "n": 12,
+          "exact": 0,
+          "top": 0
+        }
+      }
+    },
+    {
+      "persona": "ilustrador",
+      "perfilOk": true,
+      "antes": 11.8,
+      "raiz": 82.5,
+      "estrutural": 51.2,
+      "age": 93.6,
+      "instanciaPreenchida": "100.0%",
+      "instanciaAcerto": "100.0%",
+      "errosConfiantes": 0,
+      "arquivosSoltos": 300,
+      "automaticos": 118,
+      "perguntariam": 182,
+      "decisoes": 1,
+      "fator": 182,
+      "clsPorS": 141,
+      "geraPorS": 2100,
+      "pastas": 71,
+      "arquivos": 20001,
+      "porQuem": {
+        "nome": {
+          "n": 419,
+          "exact": 76,
+          "top": 336
+        },
+        "origem": {
+          "n": 41,
+          "exact": 6,
+          "top": 41
+        },
+        "ext": {
+          "n": 100,
+          "exact": 36,
+          "top": 100
+        },
+        "forma": {
+          "n": 27,
+          "exact": 5,
+          "top": 5
+        },
+        "ext-ambigua": {
+          "n": 13,
+          "exact": 1,
+          "top": 13
+        }
+      }
+    },
+    {
+      "persona": "gamer",
+      "perfilOk": true,
+      "antes": 18.3,
+      "raiz": 78.5,
+      "estrutural": 76,
+      "age": 100,
+      "instanciaPreenchida": "100.0%",
+      "instanciaAcerto": "100.0%",
+      "errosConfiantes": 0,
+      "arquivosSoltos": 300,
+      "automaticos": 151,
+      "perguntariam": 149,
+      "decisoes": 1,
+      "fator": 149,
+      "clsPorS": 149,
+      "geraPorS": 2409,
+      "pastas": 45,
+      "arquivos": 20000,
+      "porQuem": {
+        "ext-ambigua": {
+          "n": 34,
+          "exact": 22,
+          "top": 22
+        },
+        "nome": {
+          "n": 343,
+          "exact": 90,
+          "top": 268
+        },
+        "ext": {
+          "n": 194,
+          "exact": 96,
+          "top": 181
+        },
+        "fallback": {
+          "n": 18,
+          "exact": 0,
+          "top": 0
+        },
+        "conteudo+sem-mapa": {
+          "n": 2,
+          "exact": 0,
+          "top": 0
+        },
+        "origem": {
+          "n": 4,
+          "exact": 0,
+          "top": 0
+        },
+        "mime": {
+          "n": 5,
+          "exact": 0,
+          "top": 0
+        }
+      }
+    },
+    {
+      "persona": "youtuber",
+      "perfilOk": true,
+      "antes": 11,
+      "raiz": 91.2,
+      "estrutural": 86.2,
+      "age": 86.6,
+      "instanciaPreenchida": "100.0%",
+      "instanciaAcerto": "100.0%",
+      "errosConfiantes": 0,
+      "arquivosSoltos": 300,
+      "automaticos": 0,
+      "perguntariam": 300,
+      "decisoes": 7,
+      "fator": 42.9,
+      "clsPorS": 120,
+      "geraPorS": 2112,
+      "pastas": 493,
+      "arquivos": 19998,
+      "porQuem": {
+        "nome": {
+          "n": 454,
+          "exact": 125,
+          "top": 424
+        },
+        "ext": {
+          "n": 85,
+          "exact": 16,
+          "top": 78
+        },
+        "mime": {
+          "n": 18,
+          "exact": 11,
+          "top": 11
+        },
+        "ext-ambigua": {
+          "n": 34,
+          "exact": 1,
+          "top": 31
+        },
+        "origem": {
+          "n": 9,
+          "exact": 3,
+          "top": 3
+        }
+      }
+    }
+  ]
+}
