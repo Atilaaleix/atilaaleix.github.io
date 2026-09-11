@@ -184,7 +184,19 @@ export function colocar(tipo, { perfil = 'geral', aprendido = {}, ano = null, se
     // uma taxonomia única para todo mundo.
     const doPerfil = semPerfil ? null : POR_PERFIL[perfil]?.[tipo];
     if (doPerfil) { folder = doPerfil; via = `perfil:${perfil}`; confidence = 0.85; }
-    else if (GENERICO[tipo]) { folder = GENERICO[tipo]; via = 'generico'; confidence = 0.7; }
+    else if (GENERICO[tipo]) {
+      folder = GENERICO[tipo];
+      via = 'generico';
+      // O mapa generico nao e chute: e curado, e para quem nao tem profissao
+      // criativa ele E o mapa certo. Penalizar como fallback tinha um efeito
+      // que so apareceu na medicao: o perfil "pessoa comum" nunca passava de
+      // 0.7, entao NUNCA agia — perguntava em 100% dos arquivos. Um bicho que
+      // pergunta sempre e pior que nenhum bicho.
+      //
+      // A incerteza de verdade ja esta capturada em dois lugares: na confianca
+      // da propria regra, e na penalidade de destino que exige instancia.
+      confidence = perfil === 'geral' ? 0.85 : 0.78;
+    }
   }
 
   if (!folder) return { folder: 'Triagem', slots: [], precisaInstancia: false, confidence: 0.2, via: 'sem-mapa' };
