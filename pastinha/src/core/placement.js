@@ -126,6 +126,15 @@ const POR_PERFIL = {
     briefing: 'Clientes/{cliente}/Briefing', contrato: 'Clientes/{cliente}/Contratos',
     'nota-fiscal': 'Financeiro/Notas'
   },
+  gamer: {
+    'save-jogo': 'Jogos/{jogo}/Saves', mod: 'Jogos/{jogo}/Mods',
+    'captura-jogo': 'Jogos/{jogo}/Capturas', replay: 'Jogos/{jogo}/Replays',
+    'gravacao-jogo': 'Gravacoes/{jogo}', 'gravacao-tela': 'Gravacoes/{jogo}',
+    broll: 'Clipes', 'video-entrega': 'Clipes',
+    rom: 'Emuladores/ROMs', 'imagem-disco': 'Emuladores/ROMs',
+    instalador: 'Instaladores', captura: 'Capturas',
+    'arquivo-comprimido': 'Downloads/Arquivos'
+  },
   youtuber: {
     roteiro: 'Canal/{episodio}/01-Roteiro', video: 'Canal/{episodio}/02-Bruto',
     'video-bruto': 'Canal/{episodio}/02-Bruto',

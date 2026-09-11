@@ -34,6 +34,10 @@ const SHOTS = ['sh010', 'sh020', 'sh030', 'sh040', 'sh050'];
 const PASSES = ['beauty', 'diffuse', 'specular', 'cryptomatte', 'denoise'];
 const MAPAS = ['albedo', 'roughness', 'normal', 'metallic', 'displacement', 'ao'];
 const FAIXAS = ['abertura', 'refrao-alt', 'interlude', 'faixa-titulo', 'bonus'];
+const JOGOS = ['elden-ring', 'stardew', 'cs2', 'minecraft', 'baldurs-gate', 'valorant', 'zelda'];
+const CONSOLES = ['snes', 'gba', 'n64', 'nds', 'megadrive'];
+const APARELHOS = ['geladeira', 'notebook', 'fone', 'ar-condicionado', 'maquina-de-lavar'];
+const CURSOS = ['ingles', 'financas', 'design-thinking', 'python', 'fotografia'];
 const SOBRENOMES = ['silva', 'okamoto', 'ferreira', 'duarte', 'nogueira', 'batista'];
 
 /**
@@ -116,6 +120,16 @@ const TEXTOS = {
   curriculo: () => `CURRICULO\nExperiencia profissional\nFormacao academica\nIdiomas e competencias`,
   imposto: () => `RECIBO DE ENTREGA DA DECLARACAO DE IMPOSTO DE RENDA PESSOA FISICA\nExercicio 202${int(4,6)}\nNumero do recibo ${int(10000000,99999999)}`,
   saude: () => `RESULTADO DE EXAME LABORATORIAL\nPaciente\nData da coleta ${int(1,28)}/${pad(int(1,12))}/202${int(4,6)}\nHemograma completo valores de referencia`,
+  seguro: () => `APOLICE DE SEGURO ${pick(['AUTOMOVEL', 'RESIDENCIAL', 'DE VIDA'])}\nVigencia de ${int(1, 28)}/${pad(int(1, 12))}/202${int(4, 6)} a ${int(1, 28)}/${pad(int(1, 12))}/202${int(5, 7)}\nPremio anual R$ ${int(900, 8000)},00`,
+  veiculo: () => `LICENCIAMENTO ANUAL DE VEICULO\nIPVA exercicio 202${int(4, 6)}\nPlaca ABC${int(1000, 9999)}\nValor R$ ${int(400, 6000)},00`,
+  imovel: () => `IPTU ${int(1, 12)} parcela exercicio 202${int(4, 6)}\nInscricao imobiliaria ${int(100000, 999999)}\nValor venal do imovel`,
+  garantia: () => `TERMO DE GARANTIA\nProduto ${pick(APARELHOS)}\nData da compra ${int(1, 28)}/${pad(int(1, 12))}/202${int(4, 6)}\nPrazo de 12 meses a contar da emissao da nota`,
+  manual: () => `MANUAL DO USUARIO\n${pick(APARELHOS)}\nInstrucoes de instalacao e uso\nSolucao de problemas frequentes`,
+  escola: () => `BOLETIM ESCOLAR\nAno letivo 202${int(4, 6)} ${int(1, 4)} bimestre\nNotas por disciplina e frequencia`,
+  certificado: () => `CERTIFICADO DE CONCLUSAO DE CURSO\n${pick(CURSOS)}\nCarga horaria de ${int(20, 360)} horas\nEmitido em ${int(1, 28)}/${pad(int(1, 12))}/202${int(4, 6)}`,
+  apostila: () => `APOSTILA ${pick(CURSOS).toUpperCase()}\nModulo ${int(1, 12)}\nConteudo programatico e exercicios`,
+  receita: () => `RECEITA DE ${pick(['BOLO DE FUBA', 'RISOTO DE COGUMELOS', 'PAO DE QUEIJO', 'FEIJOADA'])}\nIngredientes\nModo de preparo\nRende ${int(4, 12)} porcoes`,
+  investimento: () => `NOTA DE CORRETAGEM\nB3 pregao de ${int(1, 28)}/${pad(int(1, 12))}/202${int(4, 6)}\nDividendos e proventos do periodo`,
   doc: () => `DOCUMENTO\n${pick(['Anotacoes gerais','Rascunho','Lista de tarefas','Resumo'])}\nConteudo diverso sem estrutura clara`
 };
 
@@ -206,6 +220,35 @@ const A = {
 
   instalador: () => ({ nome: sujar(`${pick(['Figma', 'Docker', 'Slack', 'Obsidian', 'Rectangle', 'Chrome'])}-${int(1, 9)}.${int(0, 20)}.${pick(['dmg', 'pkg', 'exe', 'msi'])}`), buf: HEAD[chance(0.6) ? 'dmg' : 'exe'] }),
   arquivoZip: () => ({ nome: sujar(`${pick(['assets', 'entrega', 'backup', 'fotos'])}_${dataISO()}.zip`), buf: HEAD.zip }),
+  // --- vida pessoal -----------------------------------------------------------
+  seguro: () => { textoAtual = 'seguro'; return { nome: sujar(`apolice_seguro_${pick(['auto', 'residencial', 'vida'])}_202${int(4, 6)}.pdf`), buf: conteudo('pdf') }; },
+  veiculo: () => { textoAtual = 'veiculo'; return { nome: sujar(`${pick(['ipva', 'licenciamento', 'crlv', 'multa'])}_202${int(4, 6)}.pdf`), buf: conteudo('pdf') }; },
+  imovel: () => { textoAtual = 'imovel'; return { nome: sujar(`${pick(['iptu', 'escritura', 'ata-condominio'])}_202${int(4, 6)}.pdf`), buf: conteudo('pdf') }; },
+  garantia: () => { textoAtual = 'garantia'; return { nome: sujar(`garantia_${pick(APARELHOS)}.pdf`), buf: conteudo('pdf') }; },
+  manual: () => { textoAtual = 'manual'; return { nome: sujar(`manual_${pick(APARELHOS)}.pdf`), buf: conteudo('pdf') }; },
+  escola: () => { textoAtual = 'escola'; return { nome: sujar(`boletim_${pick(['1bim', '2bim', '3bim', '4bim'])}_202${int(4, 6)}.pdf`), buf: conteudo('pdf') }; },
+  certificado: () => { textoAtual = 'certificado'; return { nome: sujar(`certificado_${pick(CURSOS)}.pdf`), buf: conteudo('pdf') }; },
+  apostila: () => { textoAtual = 'apostila'; return { nome: sujar(`apostila_${pick(CURSOS)}_mod${int(1, 12)}.pdf`), buf: conteudo('pdf') }; },
+  receita: () => { textoAtual = 'receita'; return { nome: sujar(`receita_${pick(['bolo-de-fuba', 'risoto', 'pao-de-queijo'])}.pdf`), buf: conteudo('pdf') }; },
+  investimento: () => { textoAtual = 'investimento'; return { nome: sujar(`nota_corretagem_${pad(int(1, 12))}_202${int(4, 6)}.pdf`), buf: conteudo('pdf') }; },
+
+  // --- jogos ------------------------------------------------------------------
+  saveJogo: () => ({ nome: `${pick(['save', 'autosave', 'quicksave', 'slot'])}${pad(int(1, 20), 2)}${pick(['.sav', '.ess', '.dat'])}`, buf: HEAD.bin }),
+  mod: () => ({ nome: sujar(`${pick(['textura-hd', 'ui-melhorada', 'armas-extra', 'shader-pack', 'modpack'])}_v${int(1, 9)}${pick(['.esp', '.pak', '.zip'])}`), buf: HEAD.bin }),
+  rom: () => ({ nome: `${pick(['super-mario', 'zelda', 'metroid', 'chrono', 'pokemon'])}${pick(['.nes', '.sfc', '.gba', '.n64'])}`, buf: HEAD.bin }),
+  replay: () => ({ nome: `${pick(['ranked', 'partida', 'match'])}_${dataISO()}_${pad(int(1, 60), 2)}${pick(['.dem', '.replay', '.rofl'])}`, buf: HEAD.bin }),
+  // Nome real de captura do Steam: appid_timestamp_indice.jpg
+  capturaJogo: () => ({ nome: `${int(200, 999)}_${int(1600000000, 1790000000)}_${int(1, 40)}.jpg`, buf: makeJpeg(2560, 1440) }),
+  gravacaoJogo: () => { const { buf } = makeMp4({ durationSec: int(20, 140) * 60, w: 1920, h: 1080, audio: true, mbps: 9 }); return { nome: sujar(`${pick(JOGOS)}_${pick(['gameplay', 'raid', 'ranked', 'speedrun'])}_${dataISO()}.mp4`), buf }; },
+  clipeJogo: () => { const { buf } = makeMp4({ durationSec: int(8, 60), w: 1920, h: 1080, audio: true, mbps: 30 }); return { nome: sujar(`clipe_${pick(['jogada', 'highlight', 'ace', 'fail'])}_${int(1, 200)}.mp4`), buf }; },
+
+  // --- entulho de Downloads de verdade ----------------------------------------
+  downloadAnonimo: () => { textoAtual = 'doc'; return { nome: pick([`${Math.random().toString(16).slice(2, 10)}.pdf`, 'download.pdf', `download (${int(1, 9)}).pdf`, 'documento (1).pdf', 'attachment.pdf', `file_${int(10000, 99999)}.pdf`]), buf: conteudo('pdf') }; },
+  downloadImagem: () => ({ nome: pick([`${Math.random().toString(16).slice(2, 12)}.jpg`, `unnamed (${int(1, 9)}).jpg`, `images (${int(1, 20)}).jpeg`, `foto_${int(1000, 9999)}.jpg`]), buf: makeJpeg(pick([800, 1200, 1600]), pick([600, 900, 1200])) }),
+  maquinaVirtual: () => ({ nome: `${pick(['ubuntu', 'windows11', 'kali', 'macos'])}-${int(1, 24)}.${pick(['vmdk', 'qcow2', 'ova'])}`, buf: HEAD.bin }),
+  backup: () => ({ nome: sujar(`backup_${pick(['fotos', 'documentos', 'sistema', 'projeto'])}_${dataISO()}.${pick(['bak', 'tar', 'zip'])}`), buf: HEAD.zip }),
+  legendaFilme: () => ({ nome: `${pick(['Duna', 'Interestelar', 'Cidade.de.Deus', 'Parasita'])}.202${int(0, 5)}.1080p.${pick(['pt-BR', 'eng'])}.srt`, buf: Buffer.from('1\n00:00:01,000 --> 00:00:04,000\nlegenda\n', 'utf8') }),
+
   // --- 3D -------------------------------------------------------------------
   projeto3d: () => ({ nome: sujar(`${pick(PROJETOS)}${chance(0.4) ? '_v' + int(1, 8) : ''}${pick(['.blend', '.c4d', '.ma', '.max', '.hip'])}`), buf: makeProjeto('BLENDER') }),
   cena3d: () => ({ nome: sujar(`${pick(SHOTS)}_${pick(['layout', 'anim', 'lighting'])}${pick(['.usd', '.usda', '.abc'])}`), buf: makeProjeto('PXR-USDC') }),
@@ -279,7 +322,18 @@ const PERFIS = {
     ['Fotos/{ano}', 'fotoCamera', 240], ['Capturas', 'captura', 150],
     ['Recebidos/WhatsApp', 'fotoWhats', 120], ['Documentos/Digitalizados', 'scan', 30],
     ['Instaladores', 'instalador', 25], ['Midia/Audio', 'audio', 30], ['Midia/Video', 'video', 25],
-    ['Downloads/Arquivos', 'arquivoZip', 20], ['Triagem', 'docVago', 30]
+    ['Downloads/Arquivos', 'arquivoZip', 45], ['Triagem', 'docVago', 40],
+    ['Triagem', 'downloadAnonimo', 60], ['Imagens', 'downloadImagem', 70],
+    ['Financeiro/Investimentos', 'investimento', 30],
+    ['Financeiro/Recibos', 'nota', 35],
+    ['Documentos/Seguros', 'seguro', 22], ['Documentos/Veiculo', 'veiculo', 26],
+    ['Documentos/Imovel', 'imovel', 20], ['Documentos/Garantias', 'garantia', 24],
+    ['Documentos/Manuais', 'manual', 20],
+    ['Familia/Escola', 'escola', 26], ['Casa/Receitas', 'receita', 18],
+    ['Estudos/Certificados', 'certificado', 22], ['Estudos/Apostilas', 'apostila', 28],
+    ['Midia/Legendas', 'legendaFilme', 30], ['Backups', 'backup', 20],
+    ['Instaladores/Maquinas', 'maquinaVirtual', 8],
+    ['Jogos/Capturas', 'capturaJogo', 40], ['Jogos/Saves', 'saveJogo', 20]
   ],
   designer: [
     ['Clientes/{cliente}/Briefing', 'briefing', 40], ['Clientes/{cliente}/Trabalho', 'design', 200],
@@ -384,6 +438,18 @@ const PERFIS = {
     ['Clientes/{cliente}/Briefing', 'briefing', 30], ['Clientes/{cliente}/Contratos', 'contrato', 20],
     ['Financeiro/Notas', 'nota', 35], ['Capturas', 'captura', 100]
   ],
+  gamer: [
+    ['Jogos/{jogo}/Saves', 'saveJogo', 220], ['Jogos/{jogo}/Mods', 'mod', 180],
+    ['Jogos/{jogo}/Capturas', 'capturaJogo', 900],
+    ['Jogos/{jogo}/Replays', 'replay', 260],
+    ['Gravacoes/{jogo}', 'gravacaoJogo', 140], ['Clipes', 'clipeJogo', 320],
+    ['Miniaturas', 'miniatura', 60],
+    ['Emuladores/ROMs', 'rom', 180], ['Emuladores/Saves', 'saveJogo', 90],
+    ['Instaladores', 'instalador', 90], ['Capturas', 'captura', 260],
+    ['Downloads/Arquivos', 'backup', 70], ['Downloads/Arquivos', 'arquivoZip', 90],
+    ['Downloads/Torrents', 'downloadAnonimo', 40],
+    ['Midia/Legendas', 'legendaFilme', 60], ['Financeiro/Contas', 'boleto', 40]
+  ],
   youtuber: [
     ['Canal/{episodio}/01-Roteiro', 'roteiro', 80],
     ['Canal/{episodio}/02-Bruto', 'gravacaoTela', 200],
@@ -407,6 +473,8 @@ function preencher(folder) {
     .replace('{projeto}', () => pick(PROJETOS))
     .replace('{tema}', () => pick(TEMAS))
     .replace('{shot}', () => pick(SHOTS))
+    .replace('{jogo}', () => pick(JOGOS))
+    .replace('{console}', () => pick(CONSOLES))
     .replace('{stack}', () => pick(STACKS))
     .replace('{marca}', () => pick(MARCAS))
     .replace('{ano}', () => String(ultimoAnoFoto || 2024 + Math.floor(rnd() * 3)))

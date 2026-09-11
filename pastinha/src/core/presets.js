@@ -36,13 +36,18 @@ export const PRESETS = [
     jamais: [],
     tree: [
       'Financeiro/Contas', 'Financeiro/Extratos', 'Financeiro/Impostos',
+      'Financeiro/Investimentos', 'Financeiro/Recibos',
       'Documentos/Pessoais', 'Documentos/Governo', 'Documentos/Saude',
-      'Juridico/Contratos',
+      'Documentos/Veiculo', 'Documentos/Imovel', 'Documentos/Seguros',
+      'Documentos/Garantias', 'Documentos/Manuais', 'Documentos/Digitalizados',
+      'Juridico/Contratos', 'Familia/Escola', 'Casa/Receitas', 'Casa/Compras',
+      'Estudos/Certificados', 'Estudos/Apostilas',
       'Trabalho/Apresentacoes', 'Trabalho/Relatorios', 'Trabalho/Reunioes',
-      'Carreira', 'Viagens', 'Compras',
+      'Trabalho/Planilhas', 'Carreira', 'Viagens',
       'Fotos/{ano}', 'Capturas', 'Recebidos/WhatsApp',
       'Leitura/Livros', 'Leitura/Artigos',
-      'Instaladores', 'Midia/Audio', 'Midia/Video'
+      'Instaladores', 'Midia/Audio', 'Midia/Video', 'Midia/Legendas',
+      'Downloads/Arquivos', 'Downloads/Torrents', 'Backups', 'Triagem'
     ]
   },
   {
@@ -195,6 +200,23 @@ export const PRESETS = [
       'Estudos/{ano}', 'Referencias/{tema}', 'Portfolio',
       'Clientes/{cliente}/Briefing', 'Clientes/{cliente}/Contratos',
       'Financeiro/Notas', 'Capturas'
+    ]
+  },
+  {
+    id: 'gamer',
+    label: 'Jogador',
+    why: 'Save, mod, captura, replay e gravacao de duas horas sao coisas diferentes, e todas viram um monte de arquivo com nome automatico.',
+    pergunta: ['Voce grava as partidas?', 'Usa mods ou emuladores?'],
+    sinais: ['.mp4', '.png', '.jpg', '.zip'],
+    fortes: ['.sav', '.srm', '.esp', '.pak', '.dem', '.replay', '.nes', '.sfc', '.gba', '.rofl'],
+    pastas: [/^(saves?|jogos?|games?)$/i, /^(mods?|modpacks?)$/i, /^(emuladores?|emulators?|roms?)$/i, /^(replays?|clipes?|clips?)$/i],
+    jamais: ['Jogos/{jogo}/Saves'],
+    tree: [
+      'Jogos/{jogo}/Saves', 'Jogos/{jogo}/Mods', 'Jogos/{jogo}/Capturas',
+      'Jogos/{jogo}/Replays', 'Jogos/{jogo}/Configuracoes',
+      'Gravacoes/{jogo}', 'Clipes', 'Miniaturas',
+      'Emuladores/ROMs', 'Emuladores/Saves', 'Emuladores/BIOS',
+      'Instaladores', 'Capturas', 'Downloads/Arquivos', 'Downloads/Torrents'
     ]
   },
   {

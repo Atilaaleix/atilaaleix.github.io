@@ -67,7 +67,13 @@ const EXT_DECISIVA = [
   [['.abr', '.brushset', '.tpl'], 'pincel', 0.94],
   [['.ase', '.aco', '.gpl'], 'paleta', 0.93],
   [['.dwg', '.dxf', '.rvt', '.skp', '.3dm', '.ifc', '.pln'], 'projeto-cad', 0.95],
-  [['.mid', '.midi'], 'midi', 0.95]
+  [['.mid', '.midi'], 'midi', 0.95],
+  [['.sav', '.srm', '.state', '.ess', '.dayz'], 'save-jogo', 0.94],
+  [['.nes', '.sfc', '.smc', '.gba', '.gb', '.n64', '.z64', '.nds', '.gbc'], 'rom', 0.96],
+  [['.esp', '.esm', '.esl', '.pak', '.bsa', '.ba2'], 'mod', 0.92],
+  [['.dem', '.replay', '.rofl', '.wotreplay'], 'replay', 0.93],
+  [['.vmdk', '.qcow2', '.ova', '.vdi', '.vhdx'], 'maquina-virtual', 0.96],
+  [['.bak', '.backup', '.sparsebundle', '.tib'], 'backup', 0.9]
 ];
 
 /**
@@ -104,7 +110,21 @@ const NAME_RULES = [
   { re: /\b(contrato|contract|aditivo|distrato|procuracao|nda)\b/i, tipo: 'contrato', conf: 0.88 },
   { re: /\b(curriculo|curr[íi]culo|resume|\bcv\b)\b/i, tipo: 'curriculo', conf: 0.88 },
   { re: /\b(passaporte|rg\b|cnh\b|certidao|certid[ãa]o|titulo[ _-]?de[ _-]?eleitor)\b/i, tipo: 'doc-pessoal', conf: 0.9 },
-  { re: /\b(exame|laudo|receita[ _-]?medica|atestado|hemograma)\b/i, tipo: 'saude', conf: 0.88 },
+  { re: /\b(exame|laudo|receita[ _-]?medica|atestado|hemograma|consulta|plano[ _-]?de[ _-]?saude)\b/i, tipo: 'saude', conf: 0.88 },
+  { re: /\b(apolice|seguro|sinistro|corretora)\b/i, tipo: 'seguro', conf: 0.86 },
+  { re: /\b(ipva|licenciamento|crlv|multa|detran|revisao[ _-]?do[ _-]?carro)\b/i, tipo: 'veiculo', conf: 0.88 },
+  { re: /\b(iptu|escritura|matricula[ _-]?do[ _-]?imovel|condominio[ _-]?ata|reforma)\b/i, tipo: 'imovel', conf: 0.85 },
+  { re: /\b(garantia|nota[ _-]?da[ _-]?compra|manual[ _-]?do)\b/i, tipo: 'garantia', conf: 0.84 },
+  { re: /\b(manual|guia[ _-]?do[ _-]?usuario|instrucoes|user[ _-]?manual)\b/i, tipo: 'manual', conf: 0.8 },
+  { re: /\b(boletim|matricula|mensalidade[ _-]?escolar|lista[ _-]?de[ _-]?material|escola)\b/i, tipo: 'escola', conf: 0.85 },
+  { re: /\b(certificado|diploma|conclusao[ _-]?de[ _-]?curso|certificate)\b/i, tipo: 'certificado', conf: 0.88 },
+  { re: /\b(apostila|material[ _-]?de[ _-]?aula|slides[ _-]?do[ _-]?curso|ementa)\b/i, tipo: 'apostila', conf: 0.84 },
+  { re: /\b(receita[ _-]?de|bolo|risoto|marinada|ingredientes)\b/i, tipo: 'receita', conf: 0.78 },
+  { re: /\b(carteira|corretora|b3|dividendos|nota[ _-]?de[ _-]?corretagem|informe[ _-]?de[ _-]?investimento)\b/i, tipo: 'investimento', conf: 0.86 },
+  { re: /\b(save|savegame|autosave|quicksave)\b/i, tipo: 'save-jogo', conf: 0.85, contentSafe: false },
+  { re: /\b(gameplay|walkthrough|speedrun|raid|partida)\b/i, tipo: 'gravacao-jogo', conf: 0.82, contentSafe: false },
+  { re: /^\d{3}_\d{10,}_\d+\./i, tipo: 'captura-jogo', conf: 0.94, contentSafe: false },
+  { re: /\b(mod|modpack|texture[ _-]?pack|resourcepack|shader[ _-]?pack)\b/i, tipo: 'mod', conf: 0.8, contentSafe: false },
   { re: /\b(ingresso|ticket|boarding|cart[ãa]o[ _-]?de[ _-]?embarque|passagem|eticket|reserva)\b/i, tipo: 'viagem', conf: 0.88 },
   { re: /\b(apresentacao|apresenta[çc][ãa]o|deck|pitch|keynote)\b/i, tipo: 'apresentacao', conf: 0.85 },
   { re: /\b(briefing|brief)\b/i, tipo: 'briefing', conf: 0.88 },
