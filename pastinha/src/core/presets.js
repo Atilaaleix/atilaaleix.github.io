@@ -275,16 +275,22 @@ export function guessProfile(extCounts, folderNames = []) {
       const n = extCounts[ext] || 0;
       if (n) { fortes += n; porque.push(`${n} arquivos ${ext}`); }
     }
-    // Extensão exclusiva não precisa ser maioria para provar o ponto: 200 arquivos
-    // .braw num disco de 20 mil já definem a pessoa. Por isso raiz em vez de razão.
-    score += Math.min(1, Math.sqrt(fortes / 40)) * 4;
+    // Extensao exclusiva nao precisa ser maioria, mas precisa ser mais que
+    // vestigio. Alguem com 60 saves de jogo num disco de 90 mil arquivos joga
+    // as vezes; nao e "um jogador" para efeito de organizacao. Por isso a
+    // pontuacao olha a fracao do disco tambem, nao so o numero absoluto.
+    const massaForte = Math.min(1, Math.sqrt(fortes / 40)) * Math.min(1, (fortes / total) / 0.01);
+    score += massaForte * 4;
 
     let pastas = 0;
     for (const re of p.pastas || []) {
       const hit = folderNames.find(n => re.test(n));
       if (hit) { pastas++; porque.push(`pasta "${hit}"`); }
     }
-    score += pastas * 2.5;
+    // Nome de pasta so conta se houver alguma evidencia de extensao junto.
+    // Uma pasta "Jogos" com 60 arquivos dentro nao transforma o disco inteiro
+    // no disco de um jogador.
+    score += pastas * (massaForte > 0.15 ? 2.5 : 0.6);
 
     return { preset: p, score, porque };
   }).sort((a, b) => b.score - a.score);

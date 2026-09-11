@@ -73,6 +73,7 @@ export async function runBench(cfg, { root = null, n = 120, noModel = false, ver
   /** @type {any[]} */
   const rows = [];
   let exact = 0, top = 0, ruleOnly = 0, modelUsed = 0, errors = 0, instancia = 0, exatoSemSlot = 0, comSlot = 0;
+  let confiantes = 0, confiantesOk = 0, perguntas = 0, perguntasOk = 0;
   const t0 = Date.now();
 
   for (let i = 0; i < set.length; i++) {
@@ -102,6 +103,15 @@ export async function runBench(cfg, { root = null, n = 120, noModel = false, ver
           partes.every((seg, i) => seg === '*' || seg === alvo[i])) comSlot++;
     } else if (hitExact) exatoSemSlot++;
     if (!p.usedModel) ruleOnly++; else modelUsed++;
+
+    // A metrica que de fato prevê a experiencia.
+    //
+    // Uma proposta errada com 45% de confianca NAO e um erro: ela vira pergunta,
+    // e a pessoa corrige em um clique. Erro de verdade e o que o bicho faz
+    // sozinho, achando que sabe. Medir os dois juntos esconde exatamente a
+    // diferenca entre "chato" e "perigoso".
+    if (p.confidence >= 0.8) { confiantes++; if (hitTop) confiantesOk++; }
+    else { perguntas++; if (hitTop) perguntasOk++; }
 
     rows.push({
       name: path.basename(file),
@@ -136,6 +146,11 @@ export async function runBench(cfg, { root = null, n = 120, noModel = false, ver
     acertoExato: +(exact / total).toFixed(3),
     acertoCategoriaRaiz: +(top / total).toFixed(3),
     perfil: cfg.perfil,
+    decisoesConfiantes: confiantes,
+    acertoQuandoConfiante: confiantes ? +(confiantesOk / confiantes).toFixed(3) : null,
+    viramPergunta: perguntas,
+    fracaoQueViraPergunta: +(perguntas / total).toFixed(3),
+    acertoNasPerguntas: perguntas ? +(perguntasOk / perguntas).toFixed(3) : null,
     precisamInstancia: instancia,
     acertoEstrutural: +((exatoSemSlot + comSlot) / total).toFixed(3),
     semModelo: ruleOnly, comModelo: modelUsed,
@@ -158,6 +173,10 @@ export function printReport(rep) {
   console.log('');
   console.log(`  ACERTO EXATO ..... ${pct(rep.acertoExato)}   (pasta idêntica à sua)`);
   console.log(`  ACERTO NA RAIZ ... ${pct(rep.acertoCategoriaRaiz)}   (categoria de primeiro nível certa)`);
+  if (rep.acertoQuandoConfiante !== null && rep.acertoQuandoConfiante !== undefined) {
+    console.log(`  QUANDO ELE AGE .... ${pct(rep.acertoQuandoConfiante)}   (${rep.decisoesConfiantes} decisões acima de 80% de confiança)`);
+    console.log(`  quando ele pergunta ${pct(rep.fracaoQueViraPergunta)}   dos arquivos — e acerta ${pct(rep.acertoNasPerguntas || 0)} da 1a sugestão`);
+  }
   if (rep.acertoEstrutural !== undefined) {
     console.log(`  ACERTO ESTRUTURAL  ${pct(rep.acertoEstrutural)}   (pasta certa, faltando só escolher a instância)`);
     console.log(`  precisam instância ${String(rep.precisamInstancia).padStart(4)}    (qual projeto? qual ensaio? -> vira pergunta)`);

@@ -121,7 +121,7 @@ export function shapeHint(size, mime) {
 
   // Quadrado fora de potencia de dois: ai sim e rede social ou avatar.
   if (w === h && w >= 400) {
-    return { hint: 'social', confidence: 0.55, note: 'quadrado exato' };
+    return { hint: 'social', confidence: 0.5, note: 'quadrado exato' };
   }
 
   // Muito largo: banner, capa, arte de cabecalho.
@@ -129,18 +129,18 @@ export function shapeHint(size, mime) {
     return { hint: 'arte', confidence: 0.58, note: `muito largo (${ratio.toFixed(1)}:1)` };
   }
 
-  // Proporcao classica de camera, em JPEG grande: foto.
-  if (!isPng && Math.abs(ratio - 4 / 3) < 0.04 && Math.max(w, h) >= 1600) {
-    return { hint: 'foto', confidence: 0.55, note: '4:3 de camera' };
-  }
-  if (!isPng && Math.abs(ratio - 3 / 2) < 0.04 && Math.max(w, h) >= 1600) {
-    return { hint: 'foto', confidence: 0.55, note: '3:2 de camera' };
-  }
+  // Proporcao 4:3 e 3:2 foi REMOVIDA de proposito.
+  //
+  // No teste de 1 milhao, a "forma" acertava so 25% e ainda assim decidia 6.7%
+  // dos arquivos — ou seja, estava trocando "nao sei" por "chute errado com
+  // cara de certeza", que e o pior resultado possivel. Proporcao de camera e
+  // proporcao de metade da internet: nao distingue nada.
+  //
+  // Ficaram so os sinais que sao quase provas: resolucao exata de tela,
+  // potencia de dois e proporcao de folha.
 
-  // PNG pequeno é quase sempre recorte de interface, ícone ou logo.
-  if (isPng && Math.max(w, h) < 600) {
-    return { hint: 'recorte', confidence: 0.5, note: 'PNG pequeno' };
-  }
+  // PNG pequeno tambem saiu: icone, logo, recorte de tela, emoji e figurinha
+  // tem todos o mesmo tamanho, e o destino de cada um e diferente.
 
   return null;
 }

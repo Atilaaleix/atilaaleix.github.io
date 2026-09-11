@@ -22,7 +22,10 @@ import path from 'node:path';
 const DOMAIN_MAP = [
   [/(^|\.)gov\.br$|receita\.fazenda|nfe\.fazenda|detran|inss|esocial/i, 'doc-governo'],
   [/nubank|itau|bradesco|santander|bancodobrasil|bb\.com\.br|caixa\.gov|inter\.co|c6bank|btgpactual|xpi\.com|binance|mercadopago/i, 'financeiro'],
-  [/figma\.com|sketch\.com|dribbble|behance|unsplash|pexels|freepik/i, 'referencia'],
+  // Voce baixa do Figma o SEU trabalho; voce salva do Dribbble a referencia
+  // de outra pessoa. Mesmo mundo, papeis opostos.
+  [/figma\.com|sketch\.com|adobe\.com|canva\.com/i, 'arquivo-design'],
+  [/dribbble|behance|unsplash|pexels|freepik|pinterest|artstation/i, 'referencia'],
   [/fonts\.google|fontshare|myfonts/i, 'fonte'],
   [/github|gitlab|bitbucket|npmjs|pypi|stackoverflow|developer\.apple|docker/i, 'doc-tecnica'],
   [/arxiv|scholar\.google|sciencedirect|jstor|springer|nature\.com|pubmed|ieee/i, 'artigo'],
@@ -123,7 +126,9 @@ const NAME_RULES = [
   { re: /\b(carteira|corretora|b3|dividendos|nota[ _-]?de[ _-]?corretagem|informe[ _-]?de[ _-]?investimento)\b/i, tipo: 'investimento', conf: 0.86 },
   { re: /\b(save|savegame|autosave|quicksave)\b/i, tipo: 'save-jogo', conf: 0.85, contentSafe: false },
   { re: /\b(gameplay|walkthrough|speedrun|raid|partida)\b/i, tipo: 'gravacao-jogo', conf: 0.82, contentSafe: false },
-  { re: /^\d{3}_\d{10,}_\d+\./i, tipo: 'captura-jogo', conf: 0.94, contentSafe: false },
+  // Captura do Steam: appid_timestamp_indice. Sem ancorar no ponto final, porque
+  // arquivo real ganha sufixo de copia o tempo todo ("..._17-2.jpg", "... (1).jpg").
+  { re: /^\d{3}_\d{9,}_\d+/i, tipo: 'captura-jogo', conf: 0.94, contentSafe: false },
   { re: /\b(mod|modpack|texture[ _-]?pack|resourcepack|shader[ _-]?pack)\b/i, tipo: 'mod', conf: 0.8, contentSafe: false },
   { re: /\b(ingresso|ticket|boarding|cart[ãa]o[ _-]?de[ _-]?embarque|passagem|eticket|reserva)\b/i, tipo: 'viagem', conf: 0.88 },
   { re: /\b(apresentacao|apresenta[çc][ãa]o|deck|pitch|keynote)\b/i, tipo: 'apresentacao', conf: 0.85 },

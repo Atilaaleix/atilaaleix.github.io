@@ -132,7 +132,9 @@ const POR_PERFIL = {
     'gravacao-jogo': 'Gravacoes/{jogo}', 'gravacao-tela': 'Gravacoes/{jogo}',
     broll: 'Clipes', 'video-entrega': 'Clipes',
     rom: 'Emuladores/ROMs', 'imagem-disco': 'Emuladores/ROMs',
-    instalador: 'Instaladores', captura: 'Capturas',
+    instalador: 'Instaladores', captura: 'Capturas', miniatura: 'Miniaturas',
+    'save-jogo-emulador': 'Emuladores/Saves', legenda: 'Midia/Legendas',
+    backup: 'Downloads/Arquivos',
     'arquivo-comprimido': 'Downloads/Arquivos'
   },
   youtuber: {
