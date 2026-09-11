@@ -10,6 +10,7 @@ import { imageSize, shapeHint } from '../platform/shared/imgsize.js';
 import { mp4Info, wavInfo, videoHint, audioHint } from '../platform/shared/mediainfo.js';
 import { gravidade } from './sequence.js';
 import { colocar, aprenderMapa } from './placement.js';
+import { classificar as classificarZona, acompanhantes } from './territorio.js';
 import * as journal from './journal.js';
 import * as brain from './brain.js';
 import { extract, isImage } from './extract.js';
@@ -33,17 +34,24 @@ export function isSettled(file, cfg) {
 }
 
 /** R2: isso aqui é projeto de alguém, não bagunça. */
-/** R2: isso aqui é projeto de alguém, ou território do sistema. */
+/**
+ * R2: de quem e este chao?
+ *
+ * Antes isto olhava so a pasta imediata do arquivo — o que deixava passar
+ * qualquer coisa enterrada, tipo um .png dentro de
+ * steamapps/common/jogo/Data/textures/. Agora sobe a arvore inteira.
+ */
+export function zonaDe(file, cfg) {
+  return classificarZona(file, {
+    raizes: cfg.watch || [],
+    forbiddenRoots: cfg.forbiddenRoots || []
+  });
+}
+
+/** Compatibilidade: devolve o motivo quando o chao e de outro dono. */
 export function isProjectArea(file, cfg) {
-  const dir = path.resolve(path.dirname(file));
-  for (const root of (cfg.forbiddenRoots || [])) {
-    const r = path.resolve(root);
-    if (dir === r || dir.startsWith(r + path.sep)) return `pasta do sistema (${path.basename(root)})`;
-  }
-  for (const marker of cfg.projectMarkers) {
-    if (fs.existsSync(path.join(dir, marker))) return marker;
-  }
-  return null;
+  const z = zonaDe(file, cfg);
+  return z.podeMover ? null : (z.marcador || z.zona);
 }
 
 /** Extensoes dos irmaos de pasta. Barato: um readdir, sem stat de ninguem. */
@@ -110,9 +118,19 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
   const ctx = gatherContext(file, cfg);
   if (!ctx) return null;
 
-  const marker = isProjectArea(file, cfg);
-  if (marker) {
-    return { file, skip: true, reason: `Tem ${marker} do lado — isso é projeto, não bagunça` };
+  // Territorio de outro dono: le, indexa, e nao encosta.
+  const zona = zonaDe(file, cfg);
+  if (!zona.podeMover) {
+    return {
+      file,
+      skip: true,
+      zona: zona.zona,
+      marcador: zona.marcador,
+      raizDaZona: zona.raiz,
+      reason: zona.marcador
+        ? `${zona.marcador}: ${zona.motivo}`
+        : zona.motivo
+    };
   }
 
   /** @type {any} */
@@ -179,6 +197,7 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
     proposal.slug = ruled.nameHint || slugify(ctx.stem);
 
     if (proposal.confidence >= 0.8 && !opts.forceModel) {
+      proposal.acompanhantes = acompanhantes(file);
       proposal.newName = buildName({
         date: dateFromText(proposal.text) || ctx.downloadedAt || ctx.mtime,
         slug: proposal.slug,
@@ -241,6 +260,9 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
   });
 
   proposal.candidates = cands;
+  // Arquivo que so faz sentido ao lado do irmao viaja junto. Mover um RAW sem
+  // o .xmp do lado apaga a edicao de quem trabalhou nele.
+  proposal.acompanhantes = acompanhantes(file);
   return proposal;
 }
 
@@ -286,6 +308,16 @@ export function apply(proposal, cfg, { dryRun = false } = {}) {
 
   try {
     fs.renameSync(proposal.file, to);
+    // Os acompanhantes vao atras, com o mesmo nome novo e a extensao deles.
+    for (const amigo of (proposal.acompanhantes || [])) {
+      try {
+        const destino = path.join(destDir, path.basename(to, path.extname(to)) + path.extname(amigo));
+        fs.renameSync(amigo, destino);
+        journal.append({ op: 'move', from: amigo, to: destino, fromName: path.basename(amigo),
+                         toName: path.basename(destino), category: proposal.folder,
+                         tipo: 'acompanhante', decidedBy: `junto-com:${rec.id}`, confidence: 1 });
+      } catch { /* o irmao sumiu; o principal ja foi, segue */ }
+    }
   } catch (e) {
     if (e.code === 'EXDEV') {          // volume diferente: copia e apaga
       fs.copyFileSync(proposal.file, to);

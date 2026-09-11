@@ -16,6 +16,7 @@ import { createServer } from './src/server/index.js';
 import { runBench, printReport } from './src/bench/groundtruth.js';
 import { buildSandbox } from './src/bench/sandbox.js';
 import { buildCorpus, PERFIS_DISPONIVEIS } from './src/bench/corpus.js';
+import { rodarSeguranca } from './src/bench/seguranca.js';
 import { PRESETS, getPreset, guessProfile } from './src/core/presets.js';
 
 const cfg = loadConfig();
@@ -263,6 +264,8 @@ const HELP = `
   ${c.c('node cli.js doctor')}         vê se a máquina está pronta
   ${c.c('node cli.js corpus --perfil fotografo --n 20000')}
                              corpus em massa de um perfil, com gabarito
+  ${c.c('node cli.js seguranca')}      o teste que nao admite porcentagem: 0 movimentos
+                             em jogo, projeto, pacote e biblioteca alheia
   ${c.c('node cli.js perfil')}         lista os perfis · ${c.c('perfil designer')} troca
   ${c.c('node cli.js bench')}          mede acurácia usando pastas já organizadas como gabarito
   ${c.c('node cli.js scan')}           simula: o que ele faria. não move nada
@@ -285,6 +288,11 @@ try {
     case 'doctor': await doctor(); break;
     case 'sandbox': sandbox(); break;
     case 'corpus': corpus(); break;
+    case 'seguranca': {
+      const r = await rodarSeguranca();
+      if (!r.passou) process.exit(1);
+      break;
+    }
     case 'perfil': perfilCmd(); break;
     case 'live': live(); break;
     case 'scan': await scan({ interactive: has('apply') }); break;
