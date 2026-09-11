@@ -170,6 +170,27 @@ export function slotsDe(folder) {
  */
 
 /**
+ * Destinos do mapa generico que NENHUMA profissao reorganiza.
+ *
+ * Boleto vai para Financeiro/Contas na maquina do fotografo, do advogado e da
+ * minha avo. Fonte vai para Design/Fontes em todas elas. Ninguem inventa uma
+ * arvore propria para conta de luz — entao aqui o mapa generico nao e o
+ * segundo lugar, e a resposta certa, e merece confianca de resposta certa.
+ *
+ * O resto do mapa generico NAO entra: "video-bruto -> Midia/Video/Bruto" esta
+ * certo para uma pessoa comum e errado para um videomaker, que guarda por
+ * projeto. La o generico e mesmo o segundo lugar, e foi medido: dar a ele a
+ * mesma confianca derrubou o acerto-quando-age de 97,3% para 87,2%.
+ */
+const RAIZ_FIRME = [
+  'Financeiro', 'Documentos', 'Juridico', 'Carreira', 'Viagens',
+  'Leitura', 'Capturas', 'Recebidos', 'Credenciais', 'Instaladores',
+  'Downloads', 'Compras', 'Design/Fontes',
+];
+
+const ehFirme = (destino) => RAIZ_FIRME.some(r => destino === r || destino.startsWith(r + '/'));
+
+/**
  * @param {string} tipo
  * @param {{perfil?:string, aprendido?:Record<string,string>, ano?:number|null, semPerfil?:boolean}} ctx
  * @returns {Colocacao}
@@ -188,15 +209,17 @@ export function colocar(tipo, { perfil = 'geral', aprendido = {}, ano = null, se
     else if (GENERICO[tipo]) {
       folder = GENERICO[tipo];
       via = 'generico';
-      // O mapa generico nao e chute: e curado, e para quem nao tem profissao
-      // criativa ele E o mapa certo. Penalizar como fallback tinha um efeito
-      // que so apareceu na medicao: o perfil "pessoa comum" nunca passava de
-      // 0.7, entao NUNCA agia — perguntava em 100% dos arquivos. Um bicho que
-      // pergunta sempre e pior que nenhum bicho.
+      // Tres niveis, nao um:
+      //   - sem profissao, o generico E o mapa certo                 0.85
+      //   - com profissao, mas destino que ninguem reorganiza        0.85
+      //   - com profissao, destino que a profissao reorganizaria     0.78
       //
-      // A incerteza de verdade ja esta capturada em dois lugares: na confianca
-      // da propria regra, e na penalidade de destino que exige instancia.
-      confidence = 0.85;
+      // O nivel do meio existe porque penalizar tudo tinha um efeito que so
+      // apareceu na medicao: 0.78 fica embaixo das duas portas de automacao
+      // (0.80 e 0.85), entao fonte, instalador e boleto NUNCA se guardavam
+      // sozinhos para quem tem profissao. E nao penalizar nada tinha o efeito
+      // oposto, tambem medido: o acerto-quando-age caiu 10 pontos.
+      confidence = (perfil === 'geral' || ehFirme(folder)) ? 0.85 : 0.78;
     }
   }
 

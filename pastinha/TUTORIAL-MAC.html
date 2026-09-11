@@ -1,0 +1,541 @@
+<title>Primeiro Dia da Pastinha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --paper:#e7eae9;
+  --card:#f7f9f8;
+  --card2:#dde3e1;
+  --ink:#161d1c;
+  --ink2:#3a4543;
+  --muted:#6b7572;
+  --line:#c5cecb;
+  --line2:#d6dedb;
+  --verde:#0f5f54;
+  --verde-fraco:#d7e8e4;
+  --ambar:#8a6412;
+  --ambar-fraco:#f0e6cf;
+  --vermelho:#9c362b;
+  --vermelho-fraco:#f2ddda;
+  --term-fundo:#10201e;
+  --term-texto:#dfeae7;
+  --term-comentario:#7d938e;
+  --term-prompt:#5fb8a4;
+  --sombra:0 1px 2px rgba(22,29,28,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#101615;
+    --card:#18201f;
+    --card2:#222c2a;
+    --ink:#e6ecea;
+    --ink2:#bcc6c3;
+    --muted:#8b9793;
+    --line:#2f3b39;
+    --line2:#262f2e;
+    --verde:#6fcbb6;
+    --verde-fraco:#16302c;
+    --ambar:#d9ae5c;
+    --ambar-fraco:#2e2716;
+    --vermelho:#e2897d;
+    --vermelho-fraco:#331e1b;
+    --term-fundo:#0a1413;
+    --term-texto:#dfeae7;
+    --term-comentario:#7d938e;
+    --term-prompt:#5fb8a4;
+    --sombra:0 1px 2px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101615;
+  --card:#18201f;
+  --card2:#222c2a;
+  --ink:#e6ecea;
+  --ink2:#bcc6c3;
+  --muted:#8b9793;
+  --line:#2f3b39;
+  --line2:#262f2e;
+  --verde:#6fcbb6;
+  --verde-fraco:#16302c;
+  --ambar:#d9ae5c;
+  --ambar-fraco:#2e2716;
+  --vermelho:#e2897d;
+  --vermelho-fraco:#331e1b;
+  --term-fundo:#0a1413;
+  --term-texto:#dfeae7;
+  --term-comentario:#7d938e;
+  --term-prompt:#5fb8a4;
+  --sombra:0 1px 2px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:Newsreader,Georgia,serif;font-size:18px;line-height:1.6;margin:0;
+  -webkit-font-smoothing:antialiased;
+}
+.pag{max-width:760px;margin:0 auto;padding-inline:20px;padding-block:0 90px}
+.pag > *{min-width:0}
+
+/* capa */
+.capa{padding-block:52px 30px;border-bottom:2px solid var(--ink);margin-bottom:12px}
+.etiq{
+  display:inline-block;font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--verde);
+  border:1.5px solid var(--verde);padding:5px 10px;border-radius:2px;margin-bottom:22px;
+}
+h1{font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;font-weight:800;
+   font-size:clamp(36px,7.5vw,62px);line-height:1;letter-spacing:-.03em;margin:0 0 16px;text-wrap:balance}
+.capa p{font-size:20px;color:var(--ink2);margin:0 0 18px;max-width:56ch}
+.tempo{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--muted);
+       display:flex;flex-wrap:wrap;gap:8px 24px}
+.tempo b{color:var(--ink);font-weight:500}
+
+/* passos */
+.passo{border-bottom:1px solid var(--line);padding-block:34px}
+.passo:last-of-type{border-bottom:0}
+.cab{display:grid;grid-template-columns:46px minmax(0,1fr);gap:16px;align-items:start;margin-bottom:14px}
+.cab .n{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:34px;
+        line-height:.9;color:var(--verde);font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.cab .n.zero{color:var(--muted)}
+h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:25px;
+   line-height:1.15;letter-spacing:-.02em;margin:0 0 4px;text-wrap:balance}
+.cab .por{font-size:16px;color:var(--muted);margin:0}
+.passo > p,.passo > ul,.passo > ol{margin:0 0 14px;max-width:62ch}
+.passo > ul,.passo > ol{padding-left:20px}
+li{margin-bottom:6px}
+
+h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:19px;
+   letter-spacing:-.015em;margin:30px 0 8px;text-wrap:balance}
+h4{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:11px;letter-spacing:.12em;
+   text-transform:uppercase;color:var(--muted);margin:22px 0 8px}
+p{margin:0 0 14px;max-width:62ch}
+strong{font-weight:600}
+a{color:var(--verde)}
+code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.84em;
+     background:var(--card2);padding:2px 5px;border-radius:3px;overflow-wrap:break-word}
+td code,th code{overflow-wrap:normal}
+
+/* terminal */
+.term{
+  background:var(--term-fundo);color:var(--term-texto);border-radius:6px;
+  padding:14px 16px;margin:14px 0;overflow-x:auto;white-space:pre;
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13.5px;line-height:1.7;
+  box-shadow:var(--sombra);
+}
+.term .p{color:var(--term-prompt);user-select:none}
+.term .c{color:var(--term-comentario)}
+.term b{color:#fff;font-weight:500}
+
+/* saida esperada */
+.saida{
+  background:var(--card);border:1px solid var(--line);border-left:3px solid var(--verde);
+  border-radius:4px;padding:13px 15px;margin:14px 0;
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.65;color:var(--ink2);
+}
+.saida .o{white-space:pre;overflow-x:auto}
+.saida .t{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+          margin-bottom:9px;font-weight:700}
+.saida b{color:var(--ink);font-weight:700}
+.saida i{color:var(--verde);font-style:normal;font-weight:500}
+.saida u{color:var(--muted);text-decoration:none}
+
+/* avisos */
+.aviso{border-radius:4px;padding:14px 16px;margin:16px 0;border:1px solid var(--line);
+       background:var(--card);box-shadow:var(--sombra)}
+.aviso .r{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.11em;
+          text-transform:uppercase;font-weight:700;margin-bottom:7px}
+.aviso p{font-size:16px;margin:0 0 9px;max-width:none}
+.aviso p:last-child{margin-bottom:0}
+.aviso.at{border-color:var(--ambar);background:var(--ambar-fraco)}
+.aviso.at .r{color:var(--ambar)}
+.aviso.pa{border-color:var(--vermelho);background:var(--vermelho-fraco)}
+.aviso.pa .r{color:var(--vermelho)}
+.aviso.ok{border-color:var(--verde);background:var(--verde-fraco)}
+.aviso.ok .r{color:var(--verde)}
+
+/* tabela */
+.tab{overflow-x:auto;margin:16px 0;border:1px solid var(--line);border-radius:4px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th{text-align:left;padding:9px 13px;border-bottom:1.5px solid var(--line);font-weight:700;
+   font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.09em;
+   text-transform:uppercase;color:var(--muted);white-space:nowrap}
+td{padding:9px 13px;border-bottom:1px solid var(--line2);vertical-align:top}
+tr:last-child td{border-bottom:0}
+
+/* cartoes de fechamento */
+.cartoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:18px 0}
+.cartao{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--verde);
+        border-radius:4px;padding:14px 16px;min-width:0;box-shadow:var(--sombra)}
+.cartao .t{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:17px;margin-bottom:5px}
+.cartao p{font-size:15px;margin:0;color:var(--ink2);max-width:none}
+.cartao.aviso-cor{border-top-color:var(--ambar)}
+
+.fim{border-top:2px solid var(--ink);margin-top:56px;padding-top:20px;
+     font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--muted);line-height:1.7}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+:focus-visible{outline:2px solid var(--verde);outline-offset:2px}
+@media(max-width:480px){
+  body{font-size:17px}
+  .cab{grid-template-columns:34px minmax(0,1fr);gap:12px}
+  .cab .n{font-size:26px}
+  .term,.saida{font-size:12px}
+}
+</style>
+
+<div class="pag">
+
+<header class="capa">
+  <div class="etiq">Teste no Mac · 12 set 2026</div>
+  <h1>O primeiro dia da Pastinha</h1>
+  <p>Do zero ao bicho vivo organizando seus Downloads. Sem instalar programa, sem <code>npm install</code>, sem compilar nada.</p>
+  <div class="tempo">
+    <div><b>~10 min</b> do começo ao fim</div>
+    <div><b>1</b> coisa para instalar (Node)</div>
+    <div><b>0</b> arquivos em risco se você seguir o passo 0</div>
+  </div>
+</header>
+
+<section class="passo">
+  <div class="cab">
+    <div class="n zero">0</div>
+    <div>
+      <h2>Antes de tudo: você tem Node?</h2>
+      <p class="por">O Mac não vem com ele. É a única coisa que precisa ser instalada.</p>
+    </div>
+  </div>
+
+  <p>Abra o <strong>Terminal</strong> (Cmd+Espaço, digite "terminal", enter) e cole:</p>
+
+  <div class="term"><span class="p">$</span> <b>node -v</b></div>
+
+  <p>Se responder algo como <code>v22.14.0</code> — qualquer número <strong>18 ou maior</strong> — pule para o passo 1.</p>
+
+  <div class="aviso at">
+    <div class="r">Se disser "command not found"</div>
+    <p>Vá em <a href="https://nodejs.org">nodejs.org</a>, baixe o instalador <strong>macOS Installer (.pkg)</strong> — no Mac com chip M1/M2/M3/M4 é a versão <strong>ARM64</strong>. Clique duas vezes, avance até o fim.</p>
+    <p><strong>Feche o Terminal e abra de novo</strong> depois de instalar. Ele só enxerga o Node novo numa janela nova.</p>
+  </div>
+</section>
+
+<section class="passo">
+  <div class="cab">
+    <div class="n">1</div>
+    <div>
+      <h2>Baixar</h2>
+      <p class="por">Uma pasta com os arquivos. Nada é instalado no sistema.</p>
+    </div>
+  </div>
+
+  <div class="term"><span class="p">$</span> <b>cd ~/Documents</b>
+<span class="p">$</span> <b>git clone -b claude/tamagotchi-file-organizer-xpa9x3 \</b>
+<span class="p"> </span> <b>https://github.com/atilaaleix/atilaaleix.github.io.git pastinha-teste</b>
+<span class="p">$</span> <b>cd pastinha-teste/pastinha</b></div>
+
+  <p>Daqui pra frente, <strong>todo comando é dado dentro desta pasta</strong>. Se você fechar o Terminal e voltar depois, refaça só o <code>cd</code>:</p>
+
+  <div class="term"><span class="p">$</span> <b>cd ~/Documents/pastinha-teste/pastinha</b></div>
+
+  <div class="aviso">
+    <div class="r">Se o Mac pedir para instalar as ferramentas de desenvolvedor</div>
+    <p>Ao digitar <code>git</code> pela primeira vez, o macOS abre uma janela oferecendo instalar as <em>Command Line Tools</em>. Clique em <strong>Instalar</strong> e espere. É uma vez só, e é da Apple.</p>
+  </div>
+</section>
+
+<section class="passo">
+  <div class="cab">
+    <div class="n">2</div>
+    <div>
+      <h2>Ver se a máquina está pronta</h2>
+      <p class="por">Não lê nenhum arquivo seu. Só confere se dá pé.</p>
+    </div>
+  </div>
+
+  <div class="term"><span class="p">$</span> <b>node cli.js doctor</b></div>
+
+  <div class="saida">
+    <div class="t">o que você vai ver</div>
+    <div class="o">  Pastinha · exame de admissão  <u>(macOS)</u>
+
+  <i>OK</i> Node 18 ou mais novo           <u>v22.14.0</u>
+  <i>OK</i> consegue ler suas pastas
+  <i>OK</i> detector de tipo por bytes     <u>javascript puro</u>
+  <b>!!</b> Ollama respondendo              <u>http://127.0.0.1:11434</u>
+  <i>OK</i> vigia ~/Downloads
+  <i>OK</i> vigia ~/Desktop
+  <i>OK</i> guarda em ~/Pastinha</div>
+  </div>
+
+  <div class="aviso ok">
+    <div class="r">O "!!" do Ollama é esperado</div>
+    <p>Ollama é o modelo de IA local, e ele é <strong>opcional</strong>. Todos os números do relatório foram medidos <em>sem</em> ele. Pode ignorar completamente — o bicho funciona só com as regras, que é a maior parte do trabalho.</p>
+  </div>
+
+  <div class="aviso at">
+    <div class="r">Aqui o macOS vai te interromper</div>
+    <p>Vai aparecer uma janela: <em>"Terminal" gostaria de acessar arquivos na sua pasta Downloads.</em> Clique em <strong>OK</strong>. Vai aparecer de novo para Área de Trabalho e Documentos — <strong>OK</strong> nas três.</p>
+    <p>Se você clicar em <em>Não permitir</em> sem querer, o programa vai achar que seu disco está vazio e não vai reclamar. Para consertar: <strong>Ajustes do Sistema → Privacidade e Segurança → Arquivos e Pastas → Terminal</strong> e ligue as chavinhas.</p>
+  </div>
+</section>
+
+<section class="passo">
+  <div class="cab">
+    <div class="n">3</div>
+    <div>
+      <h2>Brincar na caixa de areia primeiro</h2>
+      <p class="por">Bagunça de mentira, num canto isolado. Nenhum arquivo seu é tocado.</p>
+    </div>
+  </div>
+
+  <p>Este passo é opcional, mas vale um minuto: você vê o formato de tudo <strong>sem risco nenhum</strong> antes de apontar para os seus arquivos de verdade.</p>
+
+  <div class="term"><span class="p">$</span> <b>node cli.js sandbox</b>      <span class="c"># monta 26 arquivos de mentira</span>
+<span class="p">$</span> <b>node cli.js scan</b>         <span class="c"># mostra o que ele faria, sem mover</span>
+<span class="p">$</span> <b>node cli.js scan --apply</b> <span class="c"># decide um por um, você aprova cada</span></div>
+
+  <div class="saida">
+    <div class="t">exemplo real da saída do scan</div>
+    <div class="o">  <b>Contrato Locação Vila Mariana.pdf</b>
+  <i>→</i> Clientes/{cliente}/Contratos/2026-09-11__contrato-locacao-vila-mariana.pdf
+     <u>45% · nome:contrato · O nome indica contrato — mas preciso saber qual cliente</u>
+
+  <b>boleto_condominio_março.pdf</b>
+  <i>→</i> Financeiro/Contas/2026-09-11__boleto-condominio-marco.pdf
+     <u>85% · nome:boleto+generico · O nome indica boleto</u></div>
+  </div>
+
+  <p>Os <strong>{chaves}</strong> são os espaços que ele ainda não sabe preencher, e a porcentagem é a confiança. Abaixo de 85% ele pergunta em vez de agir.</p>
+
+  <div class="aviso pa">
+    <div class="r">Importante antes do passo 4</div>
+    <p>O comando <code>sandbox</code> <strong>aponta a configuração para a caixa de areia</strong>. Para voltar aos seus arquivos de verdade, rode <code>node cli.js live</code>. Se pular isso, o passo 4 vai continuar mexendo na bagunça de mentira.</p>
+  </div>
+</section>
+
+<section class="passo">
+  <div class="cab">
+    <div class="n">4</div>
+    <div>
+      <h2>A primeira vez, de verdade</h2>
+      <p class="por">Varre o disco, faz 8 perguntas, propõe a árvore, executa. Um comando só.</p>
+    </div>
+  </div>
+
+  <div class="term"><span class="p">$</span> <b>node cli.js live</b>      <span class="c"># volta para os seus arquivos (se você fez o passo 3)</span>
+<span class="p">$</span> <b>node cli.js comecar</b></div>
+
+  <p>Ele faz isso, nesta ordem:</p>
+
+  <div class="tab">
+  <table>
+    <thead><tr><th>Etapa</th><th>O que acontece</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Olha o disco</strong></td><td>Só nome, tamanho e data. Não abre nenhum arquivo. Menos de um minuto.</td></tr>
+      <tr><td><strong>Te conta o que achou</strong></td><td>Quantos arquivos, tipos mais comuns, quais pastas parecem projeto, e que profissão ele acha que você tem.</td></tr>
+      <tr><td><strong>8 perguntas</strong></td><td><strong>Enter aceita o padrão.</strong> Digitar <code>?</code> explica por que ele está perguntando aquilo.</td></tr>
+      <tr><td><strong>Propõe a árvore</strong></td><td>Mostra o esqueleto antes de criar qualquer pasta. Enter aprova, <code>n</code> recomeça as perguntas.</td></tr>
+      <tr><td><strong>Simula</strong></td><td>Lista o que faria, arquivo por arquivo, com a confiança. Ainda sem mover nada.</td></tr>
+      <tr><td><strong>Executa</strong></td><td>Só depois do seu enter. Cria as pastas, renomeia, move, e grava tudo para poder desfazer.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="aviso at">
+    <div class="r">A única pergunta em que eu mudaria o padrão</div>
+    <p>Na <strong>pergunta 8</strong> o padrão é <em>"pergunta sempre"</em>. É o mais seguro, mas com ele você vê pouca coisa se mexer sozinha.</p>
+    <p>Para a demonstração ficar interessante, escolha a <strong>opção 2 — "move sozinho só o óbvio"</strong>. Ele passa a guardar sozinho instalador, fonte, captura de tela e boleto, e continua perguntando em tudo que envolve projeto ou cliente.</p>
+  </div>
+
+  <div class="saida">
+    <div class="t">o final do comecar, saída real do meu teste</div>
+    <div class="o">  <b>4. O que eu faria agora, sem mover nada</b>
+
+     Captura de Tela 2026-09-10 às 14.22.03.png
+       <i>→</i> Capturas/2026-09-11__captura-de-tela.png  <i>85%</i>
+     Inter-Regular.ttf
+       <i>→</i> Design/Fontes/2026-09-11__inter-regular.ttf  <i>85%</i>
+     Contrato Locação Vila Mariana.pdf
+       <i>→</i> Clientes/{cliente}/Contratos/…  <u>45%</u>
+
+     <b>4</b> eu guardo sozinho
+     <b>5</b> precisam de você — mas são só <i>5 decisões</i>, não 5
+     <u>-- arquivo.pdf.crdownload: download pela metade</u>
+
+  Executo? [enter = sim, n = não]</div>
+  </div>
+
+  <p>Repare em três coisas dessa saída: ele <strong>não toca em download pela metade</strong>, ele <strong>agrupa perguntas</strong> (5 arquivos podem ser 1 decisão só), e ele <strong>não inventa</strong> — quando não sabe qual cliente, ele deixa o espaço aberto e pergunta.</p>
+</section>
+
+<section class="passo">
+  <div class="cab">
+    <div class="n">5</div>
+    <div>
+      <h2>Deixar vivo</h2>
+      <p class="por">Fica rodando. Todo arquivo que cair em Downloads ele pega.</p>
+    </div>
+  </div>
+
+  <div class="term"><span class="p">$</span> <b>node cli.js viver</b></div>
+
+  <p>Deixe essa janela aberta e <strong>baixe qualquer coisa</strong> no navegador. Em alguns segundos aparece a linha.</p>
+
+  <div class="saida">
+    <div class="t">saída real</div>
+    <div class="o">  Pastinha vivo.  <u>vigiando ~/Downloads e ~/Desktop</u>
+
+  <i>guardei</i> Nota Fiscal 2291.pdf  <i>→</i> Financeiro/Notas/  <u>88%</u>
+  <b>vi</b> Fatura Vivo Setembro.pdf  <i>→</i> Financeiro/Contas/  <u>85%</u></div>
+  </div>
+
+  <p><strong><code>guardei</code></strong> = ele moveu. <strong><code>vi</code></strong> = ele sabe para onde vai mas está esperando você liberar, porque você pediu para ele perguntar.</p>
+
+  <p><strong>Ctrl+C</strong> para parar. Ele não fica em segundo plano nem se instala em nada — quando você fecha a janela, acabou.</p>
+
+  <div class="aviso">
+    <div class="r">Por que um arquivo às vezes demora 6 segundos</div>
+    <p>Ele espera o arquivo parar de crescer antes de encostar. Um download de 2 GB não é movido no meio do caminho. Se você baixar e olhar na mesma hora, espere uns segundos.</p>
+  </div>
+</section>
+
+<section class="passo">
+  <div class="cab">
+    <div class="n">6</div>
+    <div>
+      <h2>Achar</h2>
+      <p class="por">Organizar sem achar é mudar o problema de lugar.</p>
+    </div>
+  </div>
+
+  <div class="term"><span class="p">$</span> <b>node cli.js achar "boleto do condominio"</b></div>
+
+  <div class="saida">
+    <div class="t">saída real</div>
+    <div class="o">  <b>*</b> 2026-09-11__boleto-condominio-marco.pdf
+     <i>~/Pastinha/Financeiro/Contas</i>
+     <u>antes: boleto_condominio_março.pdf</u></div>
+  </div>
+
+  <p>Repare no <strong>"antes:"</strong>. Ele procura também pelo nome <em>antigo</em> — você não precisa lembrar do nome novo que ele deu. Procura por nome, por caminho, pelo texto de dentro do arquivo e pela origem do download.</p>
+
+  <p>E para ver a história inteira de um arquivo:</p>
+
+  <div class="term"><span class="p">$</span> <b>node cli.js proveniencia "boleto"</b></div>
+
+  <div class="saida">
+    <div class="t">saída real</div>
+    <div class="o">  antes se chamava .... boleto_condominio_março.pdf
+  e morava em ......... ~/Downloads
+  chegou em ........... 2026-09-11
+  estava ao lado de ....
+      A0077.MP4
+      Contrato Locação Vila Mariana.pdf</div>
+  </div>
+</section>
+
+<section class="passo">
+  <div class="cab">
+    <div class="n">↺</div>
+    <div>
+      <h2>Desfazer, e apagar tudo</h2>
+      <p class="por">A parte mais importante. Testei os dois.</p>
+    </div>
+  </div>
+
+  <div class="term"><span class="p">$</span> <b>node cli.js undo</b>           <span class="c"># desfaz o último movimento</span>
+<span class="p">$</span> <b>node cli.js undo --today</b>   <span class="c"># desfaz tudo que ele fez hoje</span></div>
+
+  <p>Os arquivos voltam para a pasta original <strong>com o nome original</strong>, acento e cedilha inclusive. Eu verifiquei: 4 arquivos movidos, 4 voltaram idênticos, e a pasta de destino ficou vazia.</p>
+
+  <h4>Para remover a Pastinha do Mac</h4>
+  <div class="term"><span class="p">$</span> <b>node cli.js undo --today</b>                 <span class="c"># primeiro devolve os arquivos</span>
+<span class="p">$</span> <b>rm -rf ~/.pastinha</b>                       <span class="c"># configuração e memória</span>
+<span class="p">$</span> <b>rm -rf ~/Documents/pastinha-teste</b>        <span class="c"># o programa</span></div>
+
+  <p>A pasta <code>~/Pastinha</code> com o que ele organizou fica — é sua. Se quiser, apague também. Não existe nada instalado no sistema, nenhum serviço em segundo plano, nenhuma extensão.</p>
+</section>
+
+<section class="passo">
+  <div class="cab">
+    <div class="n">!</div>
+    <div>
+      <h2>O que eu espero que dê errado</h2>
+      <p class="por">Dizer antes é mais útil do que explicar depois.</p>
+    </div>
+  </div>
+
+  <div class="cartoes">
+    <div class="cartao aviso-cor">
+      <div class="t">O perfil vai errar</div>
+      <p>Você não é só uma das 11 profissões da lista. Ele vai chutar uma e provavelmente com "confiança baixa". A pergunta 1 conserta — escolha na mão.</p>
+    </div>
+    <div class="cartao aviso-cor">
+      <div class="t">RAW pode virar "imagem"</div>
+      <p>Tem um defeito conhecido na leitura dos bytes: CR2, NEF, ARW e DNG são TIFF por dentro, e a assinatura do TIFF casa primeiro. Está na lista de conserto, não está consertado.</p>
+    </div>
+    <div class="cartao aviso-cor">
+      <div class="t">Cliente novo vira pergunta</div>
+      <p>O primeiro arquivo de um cliente que ainda não tem pasta sempre pergunta — mesmo com o nome dele escrito dentro do PDF. Falta a captura por conteúdo.</p>
+    </div>
+    <div class="cartao aviso-cor">
+      <div class="t">A varredura pode truncar</div>
+      <p>Ela para em 120 segundos. Num Mac com biblioteca de Fotos grande ela vai bater o limite e avisar. Truncada ela ainda funciona, só com diagnóstico mais pobre.</p>
+    </div>
+    <div class="cartao aviso-cor">
+      <div class="t">iCloud pode atrapalhar</div>
+      <p>Se sua Área de Trabalho e Documentos estão no iCloud, pode haver arquivo que está só na nuvem. Ele lê nome e data normalmente, mas o diagnóstico fica incompleto.</p>
+    </div>
+    <div class="cartao aviso-cor">
+      <div class="t">Disco externo não entra</div>
+      <p>A varredura olha a sua pasta pessoal. Se o acervo está num SSD externo, ele não vai ver — ainda não dá para apontar para <code>/Volumes</code> pelas perguntas.</p>
+    </div>
+  </div>
+</section>
+
+<section class="passo">
+  <div class="cab">
+    <div class="n">?</div>
+    <div>
+      <h2>Se travar</h2>
+      <p class="por">Os quatro problemas mais prováveis e o que fazer.</p>
+    </div>
+  </div>
+
+  <div class="tab">
+  <table>
+    <thead><tr><th>Sintoma</th><th>O que é</th><th>O que fazer</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>command not found: node</code></td>
+        <td>Node não instalado, ou o Terminal foi aberto antes de instalar.</td>
+        <td>Passo 0. Depois de instalar, <strong>feche e abra o Terminal</strong>.</td>
+      </tr>
+      <tr>
+        <td>Ele diz que achou pouquíssimo arquivo</td>
+        <td>Você clicou "Não permitir" num pedido de permissão do macOS.</td>
+        <td>Ajustes do Sistema → Privacidade e Segurança → Arquivos e Pastas → ligue tudo para o Terminal.</td>
+      </tr>
+      <tr>
+        <td><code>0 arquivos guardados</code></td>
+        <td>Você deixou a pergunta 8 no padrão "pergunta sempre".</td>
+        <td>Ele te diz isso na tela agora. Rode <code>node cli.js scan --apply</code> para decidir um por um.</td>
+      </tr>
+      <tr>
+        <td>Ele mexeu em algo que não devia</td>
+        <td>Acontece.</td>
+        <td><code>node cli.js undo --today</code> e me manda a tela. É pra isso que o teste existe.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<div class="fim">
+  Tudo neste tutorial foi rodado de ponta a ponta antes de ser escrito, numa casa falsa com acento,<br>
+  cedilha, emoji, espaço no nome, download pela metade, jogo da Steam e projeto de código.<br>
+  As saídas mostradas são reais, não inventadas.<br><br>
+  branch <b>claude/tamagotchi-file-organizer-xpa9x3</b> · Node 18+ · zero dependências
+</div>
+
+</div>

@@ -2,20 +2,20 @@
   "resumo": {
     "arquivos": 219993,
     "pastas": 4538,
-    "minutos": 3.4,
+    "minutos": 3.2,
     "antes": 23.5,
     "raiz": 81.1,
-    "estrutural": 71.2,
-    "age": 97.3,
+    "estrutural": 71.3,
+    "age": 94.4,
     "perfisOk": 10,
     "perfis": 11,
     "errosConfiantesTotal": 0,
     "soltosTotal": 3300,
-    "perguntariamTotal": 2471,
-    "decisoesTotal": 63,
-    "geraPorS": 2504,
-    "clsPorS": 145.6,
-    "rssMb": 216,
+    "perguntariamTotal": 2408,
+    "decisoesTotal": 60,
+    "geraPorS": 2508,
+    "clsPorS": 169,
+    "rssMb": 248,
     "seguranca": {
       "passou": true,
       "falhasGraves": 0,
@@ -30,8 +30,8 @@
         "top": 3093
       },
       "conteudo+sem-mapa": {
-        "n": 37,
-        "top": 12
+        "n": 40,
+        "top": 15
       },
       "origem": {
         "n": 273,
@@ -42,8 +42,8 @@
         "top": 39
       },
       "mime": {
-        "n": 283,
-        "top": 83
+        "n": 281,
+        "top": 81
       },
       "ext": {
         "n": 1788,
@@ -58,7 +58,7 @@
         "top": 48
       },
       "forma": {
-        "n": 136,
+        "n": 135,
         "top": 37
       },
       "fallback": {
@@ -75,9 +75,9 @@
     {
       "persona": "geral",
       "perfilOk": false,
-      "antes": 76.7,
-      "raiz": 76.7,
-      "estrutural": 67.3,
+      "antes": 76.8,
+      "raiz": 76.8,
+      "estrutural": 67.5,
       "age": 97.6,
       "instanciaPreenchida": "—",
       "instanciaAcerto": "—",
@@ -87,8 +87,8 @@
       "perguntariam": 152,
       "decisoes": 24,
       "fator": 6.3,
-      "clsPorS": 229,
-      "geraPorS": 9720,
+      "clsPorS": 269,
+      "geraPorS": 4773,
       "pastas": 41,
       "arquivos": 19994,
       "porQuem": {
@@ -98,9 +98,9 @@
           "top": 320
         },
         "conteudo+sem-mapa": {
-          "n": 26,
-          "exact": 12,
-          "top": 12
+          "n": 29,
+          "exact": 15,
+          "top": 15
         },
         "origem": {
           "n": 11,
@@ -113,9 +113,9 @@
           "top": 25
         },
         "mime": {
-          "n": 46,
-          "exact": 46,
-          "top": 46
+          "n": 44,
+          "exact": 44,
+          "top": 44
         },
         "ext": {
           "n": 31,
@@ -133,7 +133,7 @@
           "top": 20
         },
         "forma": {
-          "n": 18,
+          "n": 17,
           "exact": 7,
           "top": 7
         },
@@ -150,7 +150,7 @@
       "antes": 21.3,
       "raiz": 74,
       "estrutural": 66.2,
-      "age": 100,
+      "age": 83.2,
       "instanciaPreenchida": "100.0%",
       "instanciaAcerto": "100.0%",
       "errosConfiantes": 0,
@@ -159,8 +159,8 @@
       "perguntariam": 245,
       "decisoes": 3,
       "fator": 81.7,
-      "clsPorS": 148,
-      "geraPorS": 3682,
+      "clsPorS": 166,
+      "geraPorS": 2483,
       "pastas": 56,
       "arquivos": 19998,
       "porQuem": {
@@ -207,7 +207,7 @@
       "antes": 6.3,
       "raiz": 75.2,
       "estrutural": 63,
-      "age": 100,
+      "age": 97.5,
       "instanciaPreenchida": "100.0%",
       "instanciaAcerto": "100.0%",
       "errosConfiantes": 0,
@@ -216,8 +216,8 @@
       "perguntariam": 262,
       "decisoes": 4,
       "fator": 65.5,
-      "clsPorS": 143,
-      "geraPorS": 2838,
+      "clsPorS": 192,
+      "geraPorS": 2229,
       "pastas": 73,
       "arquivos": 19999,
       "porQuem": {
@@ -263,8 +263,8 @@
       "perguntariam": 300,
       "decisoes": 2,
       "fator": 150,
-      "clsPorS": 101,
-      "geraPorS": 1894,
+      "clsPorS": 132,
+      "geraPorS": 2538,
       "pastas": 3521,
       "arquivos": 20000,
       "porQuem": {
@@ -301,12 +301,12 @@
       "instanciaAcerto": "—",
       "errosConfiantes": 0,
       "arquivosSoltos": 300,
-      "automaticos": 70,
-      "perguntariam": 230,
-      "decisoes": 11,
+      "automaticos": 133,
+      "perguntariam": 167,
+      "decisoes": 8,
       "fator": 20.9,
-      "clsPorS": 130,
-      "geraPorS": 2605,
+      "clsPorS": 141,
+      "geraPorS": 2492,
       "pastas": 26,
       "arquivos": 20001,
       "porQuem": {
@@ -358,7 +358,7 @@
       "antes": 9,
       "raiz": 81.2,
       "estrutural": 77.2,
-      "age": 100,
+      "age": 92,
       "instanciaPreenchida": "100.0%",
       "instanciaAcerto": "100.0%",
       "errosConfiantes": 0,
@@ -367,8 +367,8 @@
       "perguntariam": 268,
       "decisoes": 4,
       "fator": 67,
-      "clsPorS": 135,
-      "geraPorS": 2303,
+      "clsPorS": 172,
+      "geraPorS": 2772,
       "pastas": 87,
       "arquivos": 19998,
       "porQuem": {
@@ -405,7 +405,7 @@
       "antes": 12.7,
       "raiz": 75.3,
       "estrutural": 47.3,
-      "age": 100,
+      "age": 96.1,
       "instanciaPreenchida": "100.0%",
       "instanciaAcerto": "100.0%",
       "errosConfiantes": 0,
@@ -414,8 +414,8 @@
       "perguntariam": 83,
       "decisoes": 1,
       "fator": 83,
-      "clsPorS": 160,
-      "geraPorS": 2061,
+      "clsPorS": 171,
+      "geraPorS": 2277,
       "pastas": 69,
       "arquivos": 20003,
       "porQuem": {
@@ -457,7 +457,7 @@
       "antes": 5.8,
       "raiz": 93.3,
       "estrutural": 89.7,
-      "age": 92.3,
+      "age": 93,
       "instanciaPreenchida": "0.0%",
       "instanciaAcerto": "—",
       "errosConfiantes": 0,
@@ -466,8 +466,8 @@
       "perguntariam": 300,
       "decisoes": 5,
       "fator": 60,
-      "clsPorS": 146,
-      "geraPorS": 2129,
+      "clsPorS": 142,
+      "geraPorS": 2298,
       "pastas": 56,
       "arquivos": 20001,
       "porQuem": {
@@ -494,7 +494,7 @@
       "antes": 11.8,
       "raiz": 82.5,
       "estrutural": 51.2,
-      "age": 93.6,
+      "age": 86.9,
       "instanciaPreenchida": "100.0%",
       "instanciaAcerto": "100.0%",
       "errosConfiantes": 0,
@@ -503,8 +503,8 @@
       "perguntariam": 182,
       "decisoes": 1,
       "fator": 182,
-      "clsPorS": 141,
-      "geraPorS": 2100,
+      "clsPorS": 178,
+      "geraPorS": 2199,
       "pastas": 71,
       "arquivos": 20001,
       "porQuem": {
@@ -550,8 +550,8 @@
       "perguntariam": 149,
       "decisoes": 1,
       "fator": 149,
-      "clsPorS": 149,
-      "geraPorS": 2409,
+      "clsPorS": 160,
+      "geraPorS": 2364,
       "pastas": 45,
       "arquivos": 20000,
       "porQuem": {
@@ -598,7 +598,7 @@
       "antes": 11,
       "raiz": 91.2,
       "estrutural": 86.2,
-      "age": 86.6,
+      "age": 91.6,
       "instanciaPreenchida": "100.0%",
       "instanciaAcerto": "100.0%",
       "errosConfiantes": 0,
@@ -607,8 +607,8 @@
       "perguntariam": 300,
       "decisoes": 7,
       "fator": 42.9,
-      "clsPorS": 120,
-      "geraPorS": 2112,
+      "clsPorS": 136,
+      "geraPorS": 2401,
       "pastas": 493,
       "arquivos": 19998,
       "porQuem": {
