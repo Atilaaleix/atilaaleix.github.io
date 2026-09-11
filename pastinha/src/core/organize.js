@@ -11,6 +11,7 @@ import { mp4Info, wavInfo, videoHint, audioHint } from '../platform/shared/media
 import { gravidade } from './sequence.js';
 import { colocar, aprenderMapa } from './placement.js';
 import { classificar as classificarZona, acompanhantes } from './territorio.js';
+import { candidatos, resolver, preencher } from './instancia.js';
 import * as journal from './journal.js';
 import * as brain from './brain.js';
 import { extract, isImage } from './extract.js';
@@ -139,7 +140,7 @@ export function gatherContext(file, cfg) {
  * @param {string} file
  * @param {any} cfg
  * @param {any[]} taxonomy
- * @param {{noModel?:boolean, forceModel?:boolean, aprendido?:Record<string,string>, semPerfil?:boolean}} [opts]
+ * @param {{noModel?:boolean, forceModel?:boolean, aprendido?:Record<string,string>, semPerfil?:boolean, semInstancia?:boolean}} [opts]
  * @returns {Promise<any>}
  */
 export async function propose(file, cfg, taxonomy, opts = {}) {
@@ -216,6 +217,27 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
     proposal.folder = posto.folder;
     proposal.slots = posto.slots;
     proposal.precisaInstancia = posto.precisaInstancia;
+
+    // A varredura inicial ja sabe quais projetos, clientes e ensaios existem.
+    // Entao "{projeto}" nao e pergunta aberta: e escolha entre os que existem,
+    // e na maioria das vezes da para saber qual sem perguntar nada.
+    if (posto.precisaInstancia && !opts.semInstancia) {
+      const cands = candidatos(taxonomy, posto.folder);
+      const res = resolver(
+        { nome: ctx.name, texto: proposal.text, mtimeMs: ctx.mtimeMs },
+        cands
+      );
+      proposal.instancia = res;
+      if (res.valores && res.confianca >= 0.55) {
+        proposal.folder = preencher(posto.folder, res.valores);
+        proposal.slots = [];
+        proposal.precisaInstancia = false;
+        // A confianca final nao pode passar da confianca de ter acertado a
+        // instancia: saber que e um clipe nao adianta se o projeto estiver errado.
+        posto.confidence = Math.min(posto.confidence, res.confianca);
+        posto.via += `+instancia(${res.porque})`;
+      }
+    }
     // A confiança final é a do elo mais fraco: saber o que é não adianta se não
     // se sabe onde vai, e vice-versa.
     proposal.confidence = Math.min(ruled.confidence, posto.confidence);

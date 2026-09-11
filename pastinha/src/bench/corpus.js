@@ -485,7 +485,38 @@ function preencher(folder) {
 /**
  * @param {{persona?:string, n?:number, root:string, soltos?:number}} opts
  */
-export function buildCorpus({ persona = 'geral', n = 5000, root, soltos = 300 }) {
+/**
+ * Idade de cada instancia, fixa por nome.
+ *
+ * Sem isto todas as pastas nascem no mesmo instante e o sinal de recencia morre
+ * — o que fazia o teste dizer que resolver instancia nao ajuda em nada. Em disco
+ * de verdade, um projeto foi mexido ontem e outro ha dois anos, e essa diferenca
+ * e o segundo sinal mais forte que existe para saber em qual deles o arquivo entra.
+ */
+const idadeDe = new Map();
+let instanciaAtiva = null;
+function idadeDaInstancia(nome) {
+  // O projeto da sessao de importacao e, por definicao, o que a pessoa esta
+  // mexendo agora. Sortear a idade dele junto com os outros criava um mundo em
+  // que a pessoa importa um cartao para um projeto que abandonou ha dois anos.
+  if (instanciaAtiva && nome === instanciaAtiva) return Date.now() - 2 * 86400000;
+  if (!idadeDe.has(nome)) {
+    // Espalha entre hoje e dois anos atras, com peso para o passado: a pessoa
+    // tem muito projeto velho e poucos ativos.
+    const r = rnd();
+    const dias = Math.round(Math.pow(r, 0.45) * 730);
+    idadeDe.set(nome, Date.now() - dias * 86400000);
+  }
+  return idadeDe.get(nome);
+}
+
+/**
+ * @param {{persona?:string, n?:number, root:string, soltos?:number,
+ *          sessaoDe?:string|null, sessaoArquetipos?:string[]|null}} opts
+ *   sessaoDe: se dado, a pilha de soltos e uma sessao de importacao que pertence
+ *   DE VERDADE a essa instancia — e a resposta certa fica no gabarito.
+ */
+export function buildCorpus({ persona = 'geral', n = 5000, root, soltos = 300, sessaoDe = null, sessaoArquetipos = null }) {
   const dist = PERFIS[persona];
   if (!dist) throw new Error(`perfil desconhecido: ${persona}. use: ${Object.keys(PERFIS).join(', ')}`);
 
@@ -495,8 +526,12 @@ export function buildCorpus({ persona = 'geral', n = 5000, root, soltos = 300 })
   fs.mkdirSync(organizado, { recursive: true });
   fs.mkdirSync(entrada, { recursive: true });
 
+  idadeDe.clear();
+  instanciaAtiva = sessaoDe;
   /** @type {Record<string,string>} */
   const origens = {};
+  /** @type {Map<string, number>} */
+  const idadePorPasta = new Map();
   const pesoTotal = dist.reduce((s, d) => s + d[2], 0);
   /** @type {Record<string, number>} */
   const porExt = {};
@@ -520,27 +555,61 @@ export function buildCorpus({ persona = 'geral', n = 5000, root, soltos = 300 })
       const fontes = ORIGENS[arquetipo];
       if (fontes && chance(0.65)) origens[path.relative(organizado, full)] = pick(fontes);
       pastas.add(folder);
+      // A pasta de instancia manda a idade nos arquivos dentro dela.
+      const instancia = folder.split('/').find(seg => /^(?!\d{2}-)[a-z0-9-]{4,}$/i.test(seg) && seg !== folder.split('/')[0]);
+      if (instancia) {
+        const quando = idadeDaInstancia(instancia);
+        idadePorPasta.set(dir, quando);
+        const d = new Date(quando - int(0, 20) * 86400000);
+        try { fs.utimesSync(full, d, d); } catch { /* segue */ }
+      }
       const ext = path.extname(nome).toLowerCase();
       porExt[ext] = (porExt[ext] || 0) + 1;
       escritos++;
     }
   }
 
+  // Carimba a data nas pastas, do caminho mais fundo para o mais raso: mexer num
+  // arquivo atualiza a pasta pai, entao a ordem importa.
+  for (const [dir, quando] of [...idadePorPasta].sort((a, b) => b[0].length - a[0].length)) {
+    try { const d = new Date(quando); fs.utimesSync(dir, d, d); } catch { /* segue */ }
+  }
+
   fs.writeFileSync(path.join(organizado, '.pastinha-origins.json'), JSON.stringify(origens));
 
-  // A pilha de bagunça: cópias dos mesmos arquétipos, mas soltas e sem pasta.
+  // A pilha de bagunca. Em modo sessao, ela e uma importacao de verdade: todos os
+  // arquivos pertencem a MESMA instancia, e a resposta certa fica gravada. E assim
+  // que um cartao de camera chega no mundo real, e e o unico jeito de medir
+  // honestamente se o bicho sabe em qual projeto colocar.
   const velho = new Date(Date.now() - 30 * 60 * 1000);
+  /** @type {Array<{arquivo:string, instancia:string}>} */
+  const gabaritoSessao = [];
+
+  /** @type {any[]} */
+  // Uma sessao de importacao de verdade e COERENTE: e um cartao de camera, ou
+  // uma pasta de render, ou um dia de gravacao. Nao e um sortido de contrato,
+  // nota fiscal e clipe. Misturar tudo e chamar de "pertence ao projeto X"
+  // tornava o gabarito mentiroso, e o numero medido nao queria dizer nada.
+  const daSessao = sessaoArquetipos && sessaoArquetipos.length
+    ? dist.filter(([, arq]) => sessaoArquetipos.includes(arq))
+    : (sessaoDe ? dist.filter(([f]) => f.includes('{projeto}') || f.includes('{episodio}') || f.includes('{ensaio}')) : dist);
+
   for (let i = 0; i < soltos; i++) {
-    const [, arquetipo] = pick(dist);
-    const { nome, buf } = A[arquetipo]();
+    const [, arquetipo] = pick(daSessao.length ? daSessao : dist);
+    let { nome, buf } = A[arquetipo]();
+    // Uma fracao pequena carrega o nome do projeto no proprio nome — e isso basta,
+    // porque o lote inteiro herda de quem resolveu.
+    if (sessaoDe && chance(0.12)) nome = nome.replace(/(\.[^.]+)$/, `_${sessaoDe}$1`);
     let full = path.join(entrada, nome);
     if (fs.existsSync(full)) full = full.replace(/(\.[^.]+)$/, `-${i}$1`);
     fs.writeFileSync(full, buf);
     fs.utimesSync(full, velho, velho);
+    if (sessaoDe) gabaritoSessao.push({ arquivo: full, instancia: sessaoDe });
   }
 
   return {
     root, organizado, entrada, persona,
+    sessaoDe, gabaritoSessao,
     arquivos: escritos, soltos,
     pastas: pastas.size,
     nomesDePasta: [...new Set([...pastas].flatMap(p => p.split('/')))],

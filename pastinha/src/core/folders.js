@@ -33,11 +33,16 @@ export function scanTaxonomy(roots, maxDepth = 3) {
     }
 
     if (depth > 0) {
+      let mtimeMs = 0;
+      // Quando a pasta foi mexida por ultimo e o sinal que diz em qual projeto a
+      // pessoa esta trabalhando agora. Custa um stat por pasta, nao por arquivo.
+      try { mtimeMs = fs.statSync(dir).mtimeMs; } catch { /* sem permissao */ }
       folders.set(dir, {
         path: dir,
         rel: path.relative(rootLabel, dir),
         name: path.basename(dir),
         files: fileCount,
+        mtimeMs,
         depth
       });
     }

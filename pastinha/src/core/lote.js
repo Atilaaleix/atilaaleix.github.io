@@ -13,6 +13,7 @@
 // de agrupamento que a maquina enxerga sozinha.
 import path from 'node:path';
 import { detectar } from './sequence.js';
+import { herdarDoLote, preencher } from './instancia.js';
 
 /** Quanto tempo separa duas importacoes diferentes. */
 const JANELA_SESSAO_MS = 20 * 60 * 1000;
@@ -176,4 +177,57 @@ export function contarDecisoes(propostas, limiar = 0.8) {
       : 1,
     detalhe: lotes.slice(0, 8).map(l => ({ resumo: l.resumo, destino: l.folder, motivo: l.motivo, n: l.propostas.length }))
   };
+}
+
+/**
+ * Espalha a resolucao de instancia dentro de cada lote.
+ *
+ * E o passo que fecha o ciclo. Num cartao com quinhentos clipes, um punhado
+ * carrega o nome do projeto no proprio nome e resolve sozinho; os outros
+ * quatrocentos e tantos nao carregam nada. Como eles chegaram juntos, sao o
+ * mesmo trabalho — entao o que um sabe, todos sabem.
+ *
+ * A trava esta em herdarDoLote: se dois membros resolveram para projetos
+ * DIFERENTES, ninguem herda. Espalhar em cima de uma discordancia transformaria
+ * um erro em quinhentos.
+ *
+ * @param {any[]} propostas
+ * @returns {{herdaram:number, lotes:number}}
+ */
+export function aplicarHeranca(propostas) {
+  const comInstancia = propostas.filter(p => p && !p.skip && p.instancia);
+  if (!comInstancia.length) return { herdaram: 0, lotes: 0 };
+
+  // Agrupar SO os nao resolvidos era o bug: os poucos arquivos que carregam o
+  // nome do projeto resolvem sozinhos e saem da lista — justamente os que sabem
+  // a resposta ficavam de fora do lote e nunca doavam o que sabiam.
+  //
+  // Para agrupar junto, os dois tem que cair na mesma chave. Quem ja resolveu
+  // teve o {projeto} substituido no caminho, entao a chave volta ao molde.
+  const molde = p => (p.instancia && p.instancia.valores)
+    ? Object.entries(p.instancia.valores).reduce(
+        (f, [k, v]) => f.split(v).join(`{${k}}`), String(p.folder))
+    : String(p.folder);
+
+  const paraAgrupar = comInstancia.map(p => ({ ...p, folder: molde(p), __orig: p }));
+  const { lotes } = agrupar(paraAgrupar, { minimoPorTipo: 3 });
+  let herdaram = 0, lotesComHeranca = 0;
+
+  for (const lote of lotes) {
+    lote.propostas = lote.propostas.map(p => p.__orig || p);
+    const heranca = herdarDoLote(lote.propostas.map(p => ({ resolucao: p.instancia })));
+    if (!heranca) continue;
+    lotesComHeranca++;
+    for (const p of lote.propostas) {
+      if (!p.precisaInstancia) continue;
+      p.folder = preencher(p.folder, heranca.valores);
+      p.slots = [];
+      p.precisaInstancia = false;
+      p.instancia = heranca;
+      p.confidence = Math.min(p.confidence === 0.45 ? 0.82 : p.confidence, heranca.confianca);
+      p.decidedBy = (p.decidedBy || '') + '+heranca';
+      herdaram++;
+    }
+  }
+  return { herdaram, lotes: lotesComHeranca };
 }
