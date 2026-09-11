@@ -3,7 +3,10 @@
 // Se uma regra acerta, o modelo nem é chamado.
 import path from 'node:path';
 
-/** Domínio de origem -> categoria. A tabela mais barata e mais eficaz do sistema. */
+/**
+ * Domínio de origem -> categoria. A tabela mais barata e mais eficaz do sistema.
+ * @type {Array<[RegExp, string]>}
+ */
 const DOMAIN_MAP = [
   [/(^|\.)gov\.br$|receita\.fazenda|nfe\.fazenda|detran|inss|esocial/i, 'Documentos/Governo'],
   [/nubank|itau|bradesco|santander|bancodobrasil|bb\.com\.br|caixa\.gov|inter\.co|c6bank|btgpactual|xpi\.com|binance|mercadopago/i, 'Financeiro'],
@@ -18,6 +21,7 @@ const DOMAIN_MAP = [
   [/whatsapp|web\.whatsapp/i, 'Recebidos/WhatsApp']
 ];
 
+/** @type {Array<[string[], string, number]>} */
 const EXT_MAP = [
   [['.dmg', '.pkg', '.mpkg'], 'Instaladores', 0.97],
   [['.ipa', '.apk'], 'Instaladores', 0.95],
@@ -34,10 +38,14 @@ const EXT_MAP = [
   [['.stl', '.obj', '.3mf', '.gcode'], 'Design/3D', 0.92]
 ];
 
-/** Padrões de nome. Cobre PT e EN porque o Mac do usuário pode estar em qualquer um. */
+/**
+ * Padrões de nome. Cobre PT e EN porque o sistema do usuário pode estar em qualquer um.
+ * contentSafe:false = só faz sentido no nome, nunca dentro do texto.
+ * @type {Array<{re:RegExp, folder:string, conf:number, name?:string, contentSafe?:boolean}>}
+ */
 const NAME_RULES = [
-  { re: /^(screenshot|captura de tela|screen shot)/i, folder: 'Capturas', conf: 0.96, name: 'captura-de-tela' },
-  { re: /^(img|dsc|dscn|p\d{7}|gopro|pxl)[_-]?\d{3,}/i, folder: 'Fotos', conf: 0.9 },
+  { re: /^(screenshot|captura de tela|screen shot)/i, folder: 'Capturas', conf: 0.96, name: 'captura-de-tela', contentSafe: false },
+  { re: /^(img|dsc|dscn|p\d{7}|gopro|pxl)[_-]?\d{3,}/i, folder: 'Fotos', conf: 0.9, contentSafe: false },
   { re: /^(whatsapp|whats)[ _-]?(image|video|audio|ptt)/i, folder: 'Recebidos/WhatsApp', conf: 0.94 },
   { re: /\b(boleto|fatura|invoice|recibo|nota[ _-]?fiscal|nfe|danfe|comprovante)\b/i, folder: 'Financeiro/Contas', conf: 0.88 },
   { re: /\b(extrato|statement|informe[ _-]?de[ _-]?rendimentos)\b/i, folder: 'Financeiro/Extratos', conf: 0.88 },
@@ -46,9 +54,13 @@ const NAME_RULES = [
   { re: /\b(passaporte|rg\b|cnh\b|certidao|certid[ãa]o|titulo[ _-]?de[ _-]?eleitor)\b/i, folder: 'Documentos/Pessoais', conf: 0.9 },
   { re: /\b(ingresso|ticket|boarding|cart[ãa]o[ _-]?de[ _-]?embarque|reserva)\b/i, folder: 'Viagens', conf: 0.85 },
   { re: /\b(apresentacao|apresenta[çc][ãa]o|deck|pitch)\b/i, folder: 'Trabalho/Apresentacoes', conf: 0.8 },
-  { re: /^(zoom|meet|teams)[_-]/i, folder: 'Trabalho/Reunioes', conf: 0.85 }
+  { re: /^(zoom|meet|teams)[_-]/i, folder: 'Trabalho/Reunioes', conf: 0.85, contentSafe: false },
+  { re: /\b(notas? da reuniao|ata de reuniao|meeting notes)\b/i, folder: 'Trabalho/Reunioes', conf: 0.82 },
+  { re: /\b(relatorio|report) (trimestral|mensal|anual)\b/i, folder: 'Trabalho/Relatorios', conf: 0.8 },
+  { re: /\b(proposta comercial|orcamento|or[çc]amento)\b/i, folder: 'Trabalho/Propostas', conf: 0.8 }
 ];
 
+/** @type {Array<[RegExp, string, number]>} */
 const MIME_FALLBACK = [
   [/^image\//, 'Imagens', 0.6],
   [/^video\//, 'Midia/Video', 0.7],
@@ -62,20 +74,38 @@ export function domainOf(url) {
 }
 
 /**
- * ctx: { file, name, ext, mime, size, whereFroms[], meta }
+ * @typedef {object} RuleVerdict
+ * @property {string} folder
+ * @property {number} confidence
+ * @property {string} decidedBy
+ * @property {string} reason
+ * @property {string|null} [source]
+ * @property {string} [nameHint]
+ */
+
+/**
  * Devolve null quando nenhuma regra tem opinião — aí o Cérebro assume.
+ * @param {{name:string, ext:string, mime?:string|null, whereFroms?:string[],
+ *          exif?:{Make?:string,Model?:string,DateTimeOriginal?:Date}, text?:string}} ctx
+ * @returns {RuleVerdict|null}
  */
 export function classify(ctx) {
-  const { name, ext, mime, whereFroms = [], meta = {} } = ctx;
+  const { name, ext, mime, whereFroms = [], exif = {} } = ctx;
 
   // Underscore conta como caractere de palavra, então \b nunca casa em
   // "boleto_condominio". Nome de arquivo vive cheio de underscore, camelCase e
   // acento — normaliza tudo para espaço antes de testar qualquer padrão.
-  const flat = name
+  const flatten = (s) => s
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/[_.\-]+/g, ' ')
     .trim();
+
+  const flat = flatten(name);
+  // Arquivo que JÁ passou pelo bicho vira "2026-07-01__captura-de-tela.png".
+  // Sem tirar o prefixo de data, toda regra ancorada em ^ deixa de casar e ele
+  // erra justamente nos arquivos que ele mesmo organizou.
+  const flatNoDate = flatten(name.replace(/^\d{4}-\d{2}-\d{2}__/, ''));
 
   // 1. Origem do download vence quase tudo: é fato, não inferência.
   for (const url of whereFroms) {
@@ -91,7 +121,7 @@ export function classify(ctx) {
 
   // 2. Padrão de nome.
   for (const r of NAME_RULES) {
-    if (r.re.test(flat) || r.re.test(name)) {
+    if (r.re.test(flat) || r.re.test(flatNoDate) || r.re.test(name)) {
       return { folder: r.folder, confidence: r.conf, decidedBy: `nome:${r.re.source.slice(0, 28)}`,
                reason: `O nome bate com ${r.folder.toLowerCase()}`, nameHint: r.name,
                source: whereFroms[0] || null };
@@ -107,13 +137,33 @@ export function classify(ctx) {
   }
 
   // 4. Foto de câmera de verdade (tem modelo de câmera no EXIF).
-  if (meta.AcquisitionModel && /^image\//.test(mime || '')) {
-    const year = (meta.ContentCreationDate || '').slice(0, 4);
+  if (exif.Model && /^image\//.test(mime || '')) {
+    const year = exif.DateTimeOriginal instanceof Date
+      ? String(exif.DateTimeOriginal.getFullYear()) : null;
     return { folder: year ? `Fotos/${year}` : 'Fotos', confidence: 0.88, decidedBy: 'exif:camera',
-             reason: `Foto tirada com ${meta.AcquisitionModel}`, source: whereFroms[0] || null };
+             reason: `Foto tirada com ${[exif.Make, exif.Model].filter(Boolean).join(' ')}`,
+             source: whereFroms[0] || null };
   }
 
-  // 5. Chute por tipo real. Confiança baixa de propósito: vai virar pergunta.
+  // 5. As mesmas palavras-chave, agora dentro do conteúdo já extraído.
+  //
+  // Um "CARTAO DE EMBARQUE" ou um "CONTRATO DE LOCACAO" na primeira linha do
+  // documento vale tanto quanto no nome — e arquivo com nome inútil
+  // ("documento sem nome (3).pdf") é exatamente o caso mais comum.
+  // Confiança um pouco menor que a do nome, porque o texto pode ser citação.
+  if (ctx.text && ctx.text.length > 20) {
+    const head = flatten(ctx.text.slice(0, 600));
+    for (const r of NAME_RULES) {
+      if (r.contentSafe === false) continue;
+      if (r.re.test(head)) {
+        return { folder: r.folder, confidence: Math.max(0.6, r.conf - 0.1),
+                 decidedBy: 'conteudo', reason: `O conteúdo parece ${r.folder.toLowerCase()}`,
+                 source: whereFroms[0] || null };
+      }
+    }
+  }
+
+  // 6. Chute por tipo real. Confiança baixa de propósito: vai virar pergunta.
   for (const [re, folder, conf] of MIME_FALLBACK) {
     if (re.test(mime || '')) {
       return { folder, confidence: conf, decidedBy: `mime:${mime}`,
@@ -125,8 +175,13 @@ export function classify(ctx) {
 }
 
 /** Nome de arquivo previsível. O modelo só escreve o miolo; isto é código. */
+/**
+ * @param {string} s
+ * @param {number} [maxLen]
+ * @returns {string}
+ */
 export function slugify(s, maxLen = 60) {
-  return (s || '')
+  return String(s || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/['"]/g, '')
@@ -136,24 +191,33 @@ export function slugify(s, maxLen = 60) {
     .replace(/-+$/g, '');
 }
 
+/**
+ * @param {{date?:Date|null, slug?:string, context?:string|null, ext:string}} parts
+ * @returns {string}
+ */
 export function buildName({ date, slug, context, ext }) {
-  const d = date instanceof Date && !isNaN(date) ? date.toISOString().slice(0, 10) : null;
+  const d = date instanceof Date && !isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : null;
   const ctx = context ? slugify(context, 24) : null;
   return [d, slug, ctx].filter(Boolean).join('__') + ext;
 }
 
-/** Procura uma data DENTRO do conteúdo — a data do contrato vale mais que a do download. */
+/** A data do contrato vale mais que a do download. */
+/**
+ * Procura uma data DENTRO do conteúdo.
+ * @param {string} text
+ * @returns {Date|null}
+ */
 export function dateFromText(text) {
   if (!text) return null;
   const br = text.match(/\b(\d{2})[\/.-](\d{2})[\/.-](\d{4})\b/);
   if (br) {
     const d = new Date(`${br[3]}-${br[2]}-${br[1]}T12:00:00Z`);
-    if (!isNaN(d) && d.getFullYear() > 1990 && d.getFullYear() < 2100) return d;
+    if (!isNaN(d.getTime()) && d.getFullYear() > 1990 && d.getFullYear() < 2100) return d;
   }
   const iso = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
   if (iso) {
     const d = new Date(`${iso[0]}T12:00:00Z`);
-    if (!isNaN(d) && d.getFullYear() > 1990 && d.getFullYear() < 2100) return d;
+    if (!isNaN(d.getTime()) && d.getFullYear() > 1990 && d.getFullYear() < 2100) return d;
   }
   return null;
 }

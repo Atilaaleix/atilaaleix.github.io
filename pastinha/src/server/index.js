@@ -5,13 +5,13 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as journal from './journal.js';
-import * as mac from './macos.js';
-import { propose, apply, undo, undoToday, listLoose, loadTaxonomy, isSettled } from './organize.js';
-import { ollamaUp } from './brain.js';
+import * as journal from '../core/journal.js';
+import platform from '../platform/index.js';
+import { propose, apply, undo, undoToday, listLoose, loadTaxonomy, isSettled } from '../core/organize.js';
+import { ollamaUp } from '../core/brain.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const UI_DIR = path.join(HERE, '..', 'ui');
+const UI_DIR = path.join(HERE, '..', '..', 'ui');
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json' };
@@ -186,7 +186,7 @@ export function createServer(cfg) {
       if (p === '/api/find') {
         const q = url.searchParams.get('q') || '';
         const hits = journal.find(q, 15);
-        const spotlight = hits.length < 3 ? mac.mdfind(q, 5) : [];
+        const spotlight = hits.length < 3 ? platform.systemSearch(q, 5) : [];
         return json(res, 200, {
           hits: hits.map(h => ({
             path: h.entry.to, name: path.basename(h.entry.to), oldName: h.entry.fromName,
@@ -200,7 +200,7 @@ export function createServer(cfg) {
       if (p === '/api/open' && req.method === 'POST') {
         const body = await readBody(req);
         if (!body.path) return json(res, 400, { error: 'faltou o caminho' });
-        const ok = body.reveal ? mac.revealInFinder(body.path) : mac.openFile(body.path);
+        const ok = body.reveal ? platform.reveal(body.path) : platform.open(body.path);
         return json(res, 200, { ok });
       }
 

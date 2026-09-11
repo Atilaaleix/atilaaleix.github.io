@@ -3,20 +3,25 @@
 //   1. escolher entre 6 pastas candidatas (não entre as 200 do disco)
 //   2. escrever um nome curto e descritivo
 // Saída sempre em JSON, com validação defensiva porque modelo pequeno erra formato.
-import * as mac from './macos.js';
+import platform from '../platform/index.js';
 import { slugify } from './rules.js';
 
 export async function ollamaUp(cfg) {
   try {
     const r = await fetch(`${cfg.ollama.url}/api/tags`, { signal: AbortSignal.timeout(2500) });
     if (!r.ok) return { up: false, models: [] };
-    const j = await r.json();
+    const j = /** @type {{models?:Array<{name:string}>}} */ (await r.json());
     return { up: true, models: (j.models || []).map(m => m.name) };
   } catch {
     return { up: false, models: [] };
   }
 }
 
+/**
+ * @param {any} cfg
+ * @param {{model:string, prompt:string, images?:string[], json?:boolean}} opts
+ * @returns {Promise<string>}
+ */
 async function generate(cfg, { model, prompt, images, json = true }) {
   const body = {
     model,
@@ -34,10 +39,11 @@ async function generate(cfg, { model, prompt, images, json = true }) {
     signal: AbortSignal.timeout(cfg.ollama.timeoutMs)
   });
   if (!r.ok) throw new Error(`ollama ${r.status}: ${(await r.text()).slice(0, 200)}`);
-  const j = await r.json();
+  const j = /** @type {{response?:string}} */ (await r.json());
   return (j.response || '').trim();
 }
 
+/** @param {string} raw @returns {any} */
 function parseJson(raw) {
   if (!raw) return null;
   try { return JSON.parse(raw); } catch { /* tenta resgatar */ }
@@ -99,7 +105,7 @@ JSON: {"pasta":"...","nova_pasta":true|false,"descricao":"...","confianca":0.0,"
 
 /** Olha a imagem e descreve. É o "rename por IA" que você citou, feito local. */
 export async function describeImage(cfg, file) {
-  const b64 = mac.thumbnailBase64(file);
+  const b64 = platform.imageForVision(file);
   if (!b64) return null;
 
   const prompt = `Descreva esta imagem em ${LANG[cfg.lang] || LANG.pt} com 3 a 7 palavras,

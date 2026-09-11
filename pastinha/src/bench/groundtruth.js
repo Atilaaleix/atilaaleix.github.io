@@ -7,8 +7,8 @@
 // Zero trabalho manual. Roda quantas vezes quiser, a cada mudança de regra.
 import fs from 'node:fs';
 import path from 'node:path';
-import { propose } from '../engine/organize.js';
-import { scanTaxonomy } from '../engine/folders.js';
+import { propose } from '../core/organize.js';
+import { scanTaxonomy } from '../core/folders.js';
 
 const SKIP_DIR = new Set(['node_modules', '.git', 'Library', '.Trash', 'Pods', 'DerivedData', '__pycache__']);
 const SKIP_FILE = /^(\.|~\$)|\.(ds_store|localized|part|crdownload)$/i;
@@ -42,7 +42,11 @@ function sample(arr, n) {
 
 const topLevel = p => (p || '').split('/')[0];
 
-export async function runBench(cfg, { root, n = 120, noModel = false, verbose = false } = {}) {
+/**
+ * @param {any} cfg
+ * @param {{root?:string|null, n?:number, noModel?:boolean, verbose?:boolean}} [opts]
+ */
+export async function runBench(cfg, { root = null, n = 120, noModel = false, verbose = false } = {}) {
   const reference = root || cfg.learnFrom.find(r => fs.existsSync(r));
   if (!reference || !fs.existsSync(reference)) {
     throw new Error(`Não achei pasta de referência. Passe --root ~/Documents`);
@@ -56,6 +60,7 @@ export async function runBench(cfg, { root, n = 120, noModel = false, verbose = 
   const set = sample(pool, Math.min(n, pool.length));
   const taxonomy = scanTaxonomy([reference], 3);
 
+  /** @type {any[]} */
   const rows = [];
   let exact = 0, top = 0, ruleOnly = 0, modelUsed = 0, errors = 0;
   const t0 = Date.now();
@@ -92,6 +97,7 @@ export async function runBench(cfg, { root, n = 120, noModel = false, verbose = 
   const total = rows.length || 1;
   const secs = (Date.now() - t0) / 1000;
 
+  /** @type {Record<string,{n:number,exact:number,top:number}>} */
   const byDecider = {};
   for (const r of rows) {
     const k = (r.by || '?').split(':')[0];
@@ -101,6 +107,7 @@ export async function runBench(cfg, { root, n = 120, noModel = false, verbose = 
     if (r.hitTop) byDecider[k].top++;
   }
 
+  /** @type {any} */
   const report = {
     reference, avaliados: rows.length, erros: errors,
     segundos: Math.round(secs),

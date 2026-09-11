@@ -1,18 +1,26 @@
 {
   "name": "pastinha",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Um bicho de estimação com TOC de arrumação. Organiza, renomeia e acha seus arquivos. 100% local.",
-  "engines": { "node": ">=18" },
-  "bin": { "pastinha": "./cli.js" },
-  "scripts": {
-    "doctor": "node cli.js doctor",
-    "scan": "node cli.js scan",
-    "watch": "node cli.js watch",
-    "bench": "node cli.js bench",
-    "server": "node cli.js server",
-    "pet": "electron shell/main.js"
+  "description": "Um bicho de estimacao de mesa com TOC de arrumacao. Organiza, renomeia e acha seus arquivos. 100% local. Mac e Windows.",
+  "engines": {
+    "node": ">=18"
   },
-  "devDependencies": {}
+  "bin": {
+    "pastinha": "./cli.js"
+  },
+  "scripts": {
+    "sandbox": "node cli.js sandbox",
+    "doctor": "node cli.js doctor",
+    "bench": "node cli.js bench",
+    "scan": "node cli.js scan",
+    "server": "node cli.js server",
+    "pet": "electron shell/main.js",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "typescript": "^5.6.0"
+  }
 }

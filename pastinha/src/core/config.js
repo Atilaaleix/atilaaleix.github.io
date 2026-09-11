@@ -3,15 +3,17 @@
 import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
+import platform from '../platform/index.js';
 
 const HOME = os.homedir();
+const FOLDERS = platform.userFolders();
 export const DATA_DIR = path.join(HOME, '.pastinha');
 export const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 export const JOURNAL_PATH = path.join(DATA_DIR, 'journal.jsonl');
 
 const DEFAULTS = {
   // Pastas onde o bicho procura bagunça. Nada fora daqui é tocado. Nunca.
-  watch: [path.join(HOME, 'Downloads'), path.join(HOME, 'Desktop')],
+  watch: [FOLDERS.downloads, FOLDERS.desktop],
 
   // Para onde ele leva. Começa numa caixa de areia própria de propósito:
   // nos primeiros dias ele não encosta em ~/Documents. Quando você confiar,
@@ -19,7 +21,7 @@ const DEFAULTS = {
   destRoot: path.join(HOME, 'Pastinha'),
 
   // De onde ele aprende a sua taxonomia (só leitura, ele nunca mexe aqui).
-  learnFrom: [path.join(HOME, 'Documents'), path.join(HOME, 'Pastinha')],
+  learnFrom: [FOLDERS.documents, path.join(HOME, 'Pastinha')],
 
   // Acima disso ele move sozinho (quando a autonomia permitir). Abaixo, pergunta.
   autoThreshold: 0.85,
@@ -46,6 +48,9 @@ const DEFAULTS = {
 
   // Extensões que nunca são tocadas, por mais óbvias que pareçam.
   neverTouch: ['.crdownload', '.part', '.download', '.tmp', '.partial', '.lock'],
+
+  // Pastas do sistema. Nunca, em nenhuma circunstância, sob nenhuma configuração.
+  forbiddenRoots: platform.forbiddenRoots(),
 
   // Se qualquer um destes existir na pasta do arquivo, é projeto de alguém.
   projectMarkers: ['.git', 'node_modules', 'package.json', 'Cargo.toml', 'go.mod',

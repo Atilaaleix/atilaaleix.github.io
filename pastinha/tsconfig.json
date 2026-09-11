@@ -1,0 +1,26 @@
+{
+  "// por que isto existe": [
+    "Os tipos ficam em comentários JSDoc dentro dos .js, e o compilador do",
+    "TypeScript verifica tudo com checkJs. Você ganha os tipos de verdade sem",
+    "passo de build: os arquivos continuam rodando direto com `node cli.js`.",
+    "Verificar: npm run check"
+  ],
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023", "DOM"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types", "./types"]
+  },
+  "include": ["src/**/*.js", "cli.js", "ui/**/*.js", "shell/**/*.js", "types/**/*.d.ts"],
+  "exclude": ["node_modules"]
+}

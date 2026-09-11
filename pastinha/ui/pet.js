@@ -1,4 +1,9 @@
 // A casca não tem lógica: ela só desenha o que o motor manda e devolve cliques.
+//
+// O `window.pastinha` só existe quando a página roda dentro do Electron; no
+// navegador comum ele é undefined e a página cai para a rota HTTP.
+/** @type {Window & {pastinha?: {close: () => void}}} */
+const win = window;
 const $ = s => document.querySelector(s);
 const api = (p, opts) => fetch(p, opts).then(r => r.json());
 
@@ -147,7 +152,7 @@ $('#btnUndo').onclick = async () => {
   $('#says').textContent = ok?.ok ? 'devolvi pro lugar de antes' : 'não tinha nada pra desfazer';
 };
 $('#btnQuit').onclick = () => {
-  if (window.pastinha?.close) window.pastinha.close();
+  if (win.pastinha?.close) win.pastinha.close();
   else api('/api/quit', { method: 'POST' });
 };
 

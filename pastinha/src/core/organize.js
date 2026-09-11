@@ -3,7 +3,9 @@
 // de que desfazer sempre funciona, inclusive se o processo morrer no meio.
 import fs from 'node:fs';
 import path from 'node:path';
-import * as mac from './macos.js';
+import platform from '../platform/index.js';
+import { sniff } from '../platform/shared/magic.js';
+import { readExif } from '../platform/shared/exif.js';
 import * as journal from './journal.js';
 import * as brain from './brain.js';
 import { extract, isImage } from './extract.js';
@@ -21,23 +23,39 @@ export function isSettled(file, cfg) {
 
   const ageSec = (Date.now() - st.mtimeMs) / 1000;
   if (ageSec < cfg.settleSeconds) return { ok: false, why: `mexeu há ${Math.round(ageSec)}s` };
-  if (mac.isBusy(file)) return { ok: false, why: 'aberto em outro app' };
+  if (platform.isBusy(file)) return { ok: false, why: 'aberto em outro app' };
 
   return { ok: true };
 }
 
 /** R2: isso aqui é projeto de alguém, não bagunça. */
+/** R2: isso aqui é projeto de alguém, ou território do sistema. */
 export function isProjectArea(file, cfg) {
-  const dir = path.dirname(file);
+  const dir = path.resolve(path.dirname(file));
+  for (const root of (cfg.forbiddenRoots || [])) {
+    const r = path.resolve(root);
+    if (dir === r || dir.startsWith(r + path.sep)) return `pasta do sistema (${path.basename(root)})`;
+  }
   for (const marker of cfg.projectMarkers) {
     if (fs.existsSync(path.join(dir, marker))) return marker;
   }
   return null;
 }
 
+/**
+ * @typedef {object} FileContext
+ * @property {string} file @property {string} name @property {string} stem
+ * @property {string} ext @property {number} size @property {Date} mtime
+ * @property {string|null} mime @property {string[]} whereFroms
+ * @property {Date|null} downloadedAt
+ * @property {{Make?:string,Model?:string,DateTimeOriginal?:Date,hasGPS?:boolean}} exif
+ */
+
+/** @returns {FileContext|null} */
 export function gatherContext(file, cfg) {
   const ext = path.extname(file).toLowerCase();
   let st; try { st = fs.statSync(file); } catch { return null; }
+  const mime = sniff(file);
   return {
     file,
     name: path.basename(file),
@@ -45,16 +63,23 @@ export function gatherContext(file, cfg) {
     ext,
     size: st.size,
     mtime: st.mtime,
-    mime: mac.mimeType(file),
-    whereFroms: mac.whereFroms(file),
-    downloadedAt: mac.downloadedDate(file),
-    meta: mac.spotlightMeta(file)
+    mime,
+    whereFroms: platform.whereFroms(file),
+    downloadedAt: platform.downloadedDate(file),
+    exif: /^image\/jpe?g$/.test(mime || '') ? readExif(file) : {}
   };
 }
 
 /**
  * O pipeline da seção 05 do plano, inteiro.
  * Devolve uma PROPOSTA. Nunca move nada — mover é trabalho de apply().
+ */
+/**
+ * @param {string} file
+ * @param {any} cfg
+ * @param {any[]} taxonomy
+ * @param {{noModel?:boolean, forceModel?:boolean}} [opts]
+ * @returns {Promise<any>}
  */
 export async function propose(file, cfg, taxonomy, opts = {}) {
   const ctx = gatherContext(file, cfg);
@@ -65,6 +90,7 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
     return { file, skip: true, reason: `Tem ${marker} do lado — isso é projeto, não bagunça` };
   }
 
+  /** @type {any} */
   const proposal = {
     id: journal.newId(),
     file,
@@ -93,8 +119,9 @@ export async function propose(file, cfg, taxonomy, opts = {}) {
   proposal.text = ex.text;
   proposal.extractedVia = ex.via;
 
-  // 4. Regras determinísticas decidem a pasta. Sempre primeiro.
-  const ruled = rulesClassify(ctx);
+  // 4. Regras determinísticas decidem a pasta. Sempre primeiro — agora com o
+  // texto já em mãos, então elas também enxergam o conteúdo, não só o nome.
+  const ruled = rulesClassify({ ...ctx, text: proposal.text });
   if (ruled && ruled.confidence >= 0.85 && !opts.forceModel) {
     proposal.folder = ruled.folder;
     proposal.confidence = ruled.confidence;

@@ -4,8 +4,8 @@
 import { app, BrowserWindow, globalShortcut, ipcMain } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadConfig } from '../engine/config.js';
-import { createServer } from '../engine/server.js';
+import { loadConfig } from '../src/core/config.js';
+import { createServer } from '../src/server/index.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const cfg = loadConfig();
