@@ -100,27 +100,41 @@ export function shapeHint(size, mime) {
     }
   }
 
-  // Proporção de papel: A4 em retrato ou carta. Documento escaneado ou fotografado.
+  // Quadrado em potencia de dois e textura, nao post de rede social. Toda
+  // pipeline 3D e de jogo exporta assim, e nenhum feed usa 2048x2048.
+  // Foi a medicao que obrigou esta distincao: sem ela, textura virava "social".
+  const potenciaDeDois = n => n >= 256 && (n & (n - 1)) === 0;
+  if (w === h && potenciaDeDois(w)) {
+    return { hint: 'textura', confidence: 0.72, note: `${w}x${w}, potencia de dois` };
+  }
+
+  // Proporcao de folha. O formato separa os dois casos: documento escaneado sai
+  // em JPEG de scanner ou camera; arte para impressao sai em PNG grande.
   if (ratio > 0.66 && ratio < 0.78 && Math.min(w, h) > 700) {
-    return { hint: 'documento', confidence: 0.62, note: `proporção de folha (${ratio.toFixed(2)})` };
+    if (isPng && Math.min(w, h) >= 2000) {
+      return { hint: 'arte-impressao', confidence: 0.58, note: `PNG em proporcao de folha, ${w}x${h}` };
+    }
+    if (!isPng) {
+      return { hint: 'documento', confidence: 0.62, note: `proporcao de folha (${ratio.toFixed(2)})` };
+    }
   }
 
-  // Quadrado exato: quase sempre rede social ou avatar.
+  // Quadrado fora de potencia de dois: ai sim e rede social ou avatar.
   if (w === h && w >= 400) {
-    return { hint: 'social', confidence: 0.6, note: 'quadrado exato' };
+    return { hint: 'social', confidence: 0.55, note: 'quadrado exato' };
   }
 
-  // Muito largo: banner, capa, arte de cabeçalho.
+  // Muito largo: banner, capa, arte de cabecalho.
   if (ratio >= 2.4 && w >= 1200) {
     return { hint: 'arte', confidence: 0.58, note: `muito largo (${ratio.toFixed(1)}:1)` };
   }
 
-  // Proporção clássica de câmera, em JPEG grande: foto.
+  // Proporcao classica de camera, em JPEG grande: foto.
   if (!isPng && Math.abs(ratio - 4 / 3) < 0.04 && Math.max(w, h) >= 1600) {
-    return { hint: 'foto', confidence: 0.55, note: '4:3 de câmera' };
+    return { hint: 'foto', confidence: 0.55, note: '4:3 de camera' };
   }
   if (!isPng && Math.abs(ratio - 3 / 2) < 0.04 && Math.max(w, h) >= 1600) {
-    return { hint: 'foto', confidence: 0.55, note: '3:2 de câmera' };
+    return { hint: 'foto', confidence: 0.55, note: '3:2 de camera' };
   }
 
   // PNG pequeno é quase sempre recorte de interface, ícone ou logo.

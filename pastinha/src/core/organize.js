@@ -7,6 +7,8 @@ import platform from '../platform/index.js';
 import { sniff } from '../platform/shared/magic.js';
 import { readExif } from '../platform/shared/exif.js';
 import { imageSize, shapeHint } from '../platform/shared/imgsize.js';
+import { mp4Info, wavInfo, videoHint, audioHint } from '../platform/shared/mediainfo.js';
+import { gravidade } from './sequence.js';
 import { colocar, aprenderMapa } from './placement.js';
 import * as journal from './journal.js';
 import * as brain from './brain.js';
@@ -44,6 +46,14 @@ export function isProjectArea(file, cfg) {
   return null;
 }
 
+/** Extensoes dos irmaos de pasta. Barato: um readdir, sem stat de ninguem. */
+function vizinhosDe(file) {
+  try {
+    const irmaos = fs.readdirSync(path.dirname(file)).filter(n => n !== path.basename(file));
+    return irmaos.length > 4000 ? gravidade(irmaos.slice(0, 4000)) : gravidade(irmaos);
+  } catch { return { dominante: null, fracao: 0, total: 0 }; }
+}
+
 /**
  * @typedef {object} FileContext
  * @property {string} file @property {string} name @property {string} stem
@@ -51,6 +61,8 @@ export function isProjectArea(file, cfg) {
  * @property {string|null} mime @property {string[]} whereFroms
  * @property {Date|null} downloadedAt
  * @property {{hint:string,confidence:number,note:string}|null} shape
+ * @property {{hint:string,confidence:number,note:string}|null} media
+ * @property {{dominante:string|null,fracao:number,total:number}} vizinhos
  * @property {{Make?:string,Model?:string,DateTimeOriginal?:Date,hasGPS?:boolean}} exif
  */
 
@@ -72,7 +84,14 @@ export function gatherContext(file, cfg) {
     exif: /^image\/jpe?g$/.test(mime || '') ? readExif(file) : {},
     // A forma da imagem é o sinal que sobra quando não há EXIF nem nome útil —
     // e imagem sem os dois é o caso mais comum de todos.
-    shape: /^image\//.test(mime || '') ? shapeHint(imageSize(file), mime) : null
+    shape: /^image\//.test(mime || '') ? shapeHint(imageSize(file), mime) : null,
+    // Duracao e resolucao separam B-roll de export, e efeito sonoro de podcast.
+    // Sai do cabecalho, sem decodificar um quadro e sem modelo nenhum.
+    media: /^video\//.test(mime || '') ? videoHint(mp4Info(file), st.size)
+         : (/^audio\//.test(mime || '') && ext === '.wav') ? audioHint(wavInfo(file))
+         : null,
+    // Gravidade da pasta: arquivo solto onde 90% e .CR3 pertence aquilo.
+    vizinhos: vizinhosDe(file)
   };
 }
 

@@ -52,7 +52,9 @@ export const PRESETS = [
     pergunta: ['Você trabalha por cliente ou por projeto?', 'Precisa achar entrega antiga de cliente?'],
     sinais: ['.psd', '.ai', '.png', '.pdf'],
     fortes: ['.fig', '.sketch', '.indd', '.afdesign', '.afphoto', '.xd'],
-    pastas: [/^clientes?$/i, /mockups?/i, /^refer[eê]ncias?$/i, /^portfolio$/i],
+    // "Clientes", "Referencias" e "Portfolio" existem no disco de TODO profissional
+    // criativo. Sinal que todo mundo tem nao e sinal — so sobra o que e so deste.
+    pastas: [/mockups?/i, /^exporta[çc][õo]es$/i, /^(icones|icons)$/i],
     jamais: ['Biblioteca/Fontes'],
     tree: [
       'Clientes/{cliente}/Briefing', 'Clientes/{cliente}/Referencias',
@@ -115,6 +117,84 @@ export const PRESETS = [
       'Credenciais', 'Configuracoes', 'Instaladores',
       'Trabalho/Reunioes', 'Trabalho/Specs',
       'Capturas', 'Financeiro/Notas', 'Carreira'
+    ]
+  },
+  {
+    id: 'artista3d',
+    label: 'Artista 3D',
+    why: 'Cena, texturas, cache e render sao arquivos diferentes do mesmo trabalho. Render sai em sequencia de centenas de quadros.',
+    pergunta: ['Voce organiza por shot ou por asset?', 'Guarda os caches e os passes?'],
+    sinais: ['.png', '.jpg', '.mp4'],
+    fortes: ['.blend', '.c4d', '.ma', '.mb', '.max', '.hip', '.usd', '.usdz', '.abc', '.ztl', '.spp', '.sbsar', '.exr', '.hdr'],
+    pastas: [/^(assets?|cenas?|scenes?)$/i, /^(texturas?|textures?)$/i, /^(renders?|saida|output)$/i, /^(cache|sim|simula)/i, /^hdri?s?$/i],
+    jamais: ['Projetos/{projeto}/04-Cache'],
+    tree: [
+      'Projetos/{projeto}/01-Cena', 'Projetos/{projeto}/02-Modelos',
+      'Projetos/{projeto}/03-Texturas', 'Projetos/{projeto}/04-Cache',
+      'Projetos/{projeto}/05-Render', 'Projetos/{projeto}/06-Composicao',
+      'Projetos/{projeto}/07-Entregas',
+      'Biblioteca/Modelos', 'Biblioteca/Texturas', 'Biblioteca/HDRI',
+      'Biblioteca/Materiais', 'Biblioteca/Rigs',
+      'Referencias/{tema}', 'Portfolio',
+      'Clientes/{cliente}/Briefing', 'Clientes/{cliente}/Contratos',
+      'Financeiro/Notas', 'Capturas'
+    ]
+  },
+  {
+    id: 'motion',
+    label: 'Motion designer',
+    why: 'Projeto de animacao amarra dezenas de arquivos externos. Perder um link quebra o projeto inteiro.',
+    pergunta: ['Usa pasta de projeto padronizada?', 'Guarda os pre-renders?'],
+    sinais: ['.mp4', '.mov', '.png', '.psd'],
+    fortes: ['.aep', '.aepx', '.mogrt', '.lottie', '.aet'],
+    pastas: [/^(comps?|composicoes)$/i, /^(pre.?renders?)$/i, /^(mogrts?|templates?)$/i, /^footage$/i],
+    jamais: ['Projetos/{projeto}/04-PreRender'],
+    tree: [
+      'Projetos/{projeto}/01-Projeto', 'Projetos/{projeto}/02-Assets',
+      'Projetos/{projeto}/03-Audio', 'Projetos/{projeto}/04-PreRender',
+      'Projetos/{projeto}/05-Entregas',
+      'Biblioteca/Templates', 'Biblioteca/Trilhas', 'Biblioteca/EfeitosSonoros',
+      'Biblioteca/Texturas', 'Referencias/{tema}', 'Portfolio',
+      'Clientes/{cliente}/Briefing', 'Clientes/{cliente}/Contratos',
+      'Financeiro/Notas', 'Capturas'
+    ]
+  },
+  {
+    id: 'musico',
+    label: 'Musico ou produtor',
+    why: 'Projeto de audio depende de samples que moram fora dele. E cada versao de mixagem e um arquivo novo.',
+    pergunta: ['Organiza por faixa ou por album?', 'Guarda as stems?'],
+    sinais: ['.wav', '.mp3', '.aif'],
+    fortes: ['.logicx', '.als', '.flp', '.ptx', '.rpp', '.cpr', '.band', '.nki', '.mid', '.adg'],
+    pastas: [/^(stems?|multipistas?)$/i, /^(samples?|amostras?)$/i, /^(mixagens?|mixes?)$/i, /^(masters?|masteriza)/i],
+    jamais: ['Projetos/{projeto}/03-Stems'],
+    tree: [
+      'Projetos/{projeto}/01-Projeto', 'Projetos/{projeto}/02-Gravacoes',
+      'Projetos/{projeto}/03-Stems', 'Projetos/{projeto}/04-Mixagens',
+      'Projetos/{projeto}/05-Masters',
+      'Biblioteca/Samples', 'Biblioteca/Presets', 'Biblioteca/MIDI',
+      'Biblioteca/Instrumentos',
+      'Referencias', 'Portfolio', 'Shows',
+      'Clientes/{cliente}/Contratos', 'Financeiro/Notas', 'Capturas'
+    ]
+  },
+  {
+    id: 'ilustrador',
+    label: 'Ilustrador',
+    why: 'Muito rascunho, muita camada, muita versao. E o arquivo de trabalho e enorme comparado a entrega.',
+    pergunta: ['Separa rascunho de arte final?', 'Trabalha por encomenda?'],
+    sinais: ['.png', '.jpg', '.pdf'],
+    fortes: ['.procreate', '.clip', '.csp', '.kra', '.xcf'],
+    pastas: [/^(rascunhos?|sketches?|studies)$/i, /^(finais?|arte.?final)$/i, /^(pinceis|brushes)$/i, /^(paletas?)$/i],
+    jamais: ['Biblioteca/Pinceis'],
+    tree: [
+      'Trabalhos/{projeto}/01-Rascunhos', 'Trabalhos/{projeto}/02-Lineart',
+      'Trabalhos/{projeto}/03-Cor', 'Trabalhos/{projeto}/04-Final',
+      'Trabalhos/{projeto}/05-Entregas',
+      'Biblioteca/Pinceis', 'Biblioteca/Paletas', 'Biblioteca/Texturas',
+      'Estudos/{ano}', 'Referencias/{tema}', 'Portfolio',
+      'Clientes/{cliente}/Briefing', 'Clientes/{cliente}/Contratos',
+      'Financeiro/Notas', 'Capturas'
     ]
   },
   {

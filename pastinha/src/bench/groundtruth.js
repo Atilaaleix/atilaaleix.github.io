@@ -31,10 +31,18 @@ function collect(root, maxDepth = 4) {
   return out;
 }
 
-function sample(arr, n) {
+// Amostragem com semente fixa.
+//
+// Sem isto, duas rodadas do MESMO codigo davam numeros 1 a 2% diferentes — e
+// esse e exatamente o tamanho da maioria das melhorias que a gente mede. Ou
+// seja: dava para comemorar ruido. Com semente, toda diferenca entre duas
+// rodadas vem do codigo, nao do sorteio.
+function sample(arr, n, semente = 20260911) {
+  let s = semente;
+  const rnd = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rnd() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a.slice(0, n);
@@ -58,6 +66,7 @@ export async function runBench(cfg, { root = null, n = 120, noModel = false, ver
     throw new Error(`Só achei ${pool.length} arquivos organizados em ${reference}. ` +
                     `Aponte --root para uma pasta que você já organizou.`);
   }
+  pool.sort((a, b) => a.file < b.file ? -1 : a.file > b.file ? 1 : 0);
   const set = sample(pool, Math.min(n, pool.length));
   const taxonomy = scanTaxonomy([reference], 3);
 

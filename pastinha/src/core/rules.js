@@ -36,10 +36,10 @@ const DOMAIN_MAP = [
 ];
 
 /** @type {Array<[string[], string, number]>} */
-const EXT_MAP = [
+const EXT_DECISIVA = [
   [['.dmg', '.pkg', '.mpkg', '.exe', '.msi', '.ipa', '.apk', '.appimage'], 'instalador', 0.96],
   [['.torrent'], 'torrent', 0.95],
-  [['.fig', '.sketch', '.xd', '.psd', '.ai', '.indd', '.afdesign', '.afphoto'], 'arquivo-design', 0.93],
+  [['.fig', '.sketch', '.xd', '.afdesign', '.afphoto'], 'arquivo-design', 0.93],
   [['.ttf', '.otf', '.woff', '.woff2'], 'fonte', 0.96],
   [['.srt', '.vtt', '.ass', '.sub'], 'legenda', 0.94],
   [['.epub', '.mobi', '.azw3'], 'livro', 0.95],
@@ -47,25 +47,55 @@ const EXT_MAP = [
   [['.xmp', '.lrcat', '.lrtemplate'], 'sidecar', 0.95],
   [['.prproj', '.drp', '.aep', '.fcpbundle', '.veg', '.kdenlive'], 'projeto-edicao', 0.96],
   [['.cube', '.look', '.3dl'], 'lut', 0.96],
-  [['.mp3', '.wav', '.flac', '.aac', '.m4a', '.aiff', '.ogg'], 'audio', 0.85],
-  [['.mp4', '.mov', '.mkv', '.avi', '.webm', '.m4v', '.mxf'], 'video', 0.82],
+
   [['.ics'], 'calendario', 0.9],
   [['.sql', '.db', '.sqlite'], 'dados', 0.85],
   [['.pem', '.key', '.p12', '.keystore', '.mobileprovision'], 'credencial', 0.94],
   [['.ts', '.tsx', '.jsx', '.py', '.go', '.rs', '.swift', '.java', '.kt', '.rb', '.php', '.ipynb'], 'codigo', 0.9],
   [['.iso', '.img'], 'imagem-disco', 0.9],
-  [['.stl', '.obj', '.3mf', '.gcode'], 'modelo-3d', 0.92],
-  [['.zip', '.rar', '.7z', '.tar', '.gz'], 'arquivo-comprimido', 0.7]
+  [['.stl', '.obj', '.3mf', '.gcode', '.fbx', '.dae', '.glb', '.gltf', '.ply'], 'modelo-3d', 0.94],
+  [['.blend', '.c4d', '.ma', '.mb', '.max', '.hip', '.hiplc', '.lxo', '.ztl'], 'projeto-3d', 0.96],
+  [['.usd', '.usda', '.usdc', '.usdz', '.abc'], 'cena-3d', 0.94],
+  [['.exr', '.dpx', '.tga'], 'render', 0.9],
+  [['.hdr', '.hdri'], 'hdri', 0.95],
+  [['.spp', '.sbsar', '.sbs', '.mat', '.mtlx'], 'material', 0.94],
+  [['.bgeo', '.vdb', '.bphys', '.sim'], 'cache-3d', 0.95],
+  [['.aep', '.aepx', '.aet', '.mogrt', '.lottie'], 'projeto-motion', 0.96],
+  [['.logicx', '.als', '.flp', '.ptx', '.rpp', '.cpr', '.band', '.reason'], 'projeto-audio', 0.96],
+  [['.nki', '.nkm', '.adg', '.adv', '.fxp', '.vstpreset'], 'preset-audio', 0.93],
+  [['.procreate', '.clip', '.csp', '.kra', '.xcf'], 'ilustracao', 0.95],
+  [['.abr', '.brushset', '.tpl'], 'pincel', 0.94],
+  [['.ase', '.aco', '.gpl'], 'paleta', 0.93],
+  [['.dwg', '.dxf', '.rvt', '.skp', '.3dm', '.ifc', '.pln'], 'projeto-cad', 0.95],
+  [['.mid', '.midi'], 'midi', 0.95]
+];
+
+/**
+ * Extensoes AMBIGUAS. So decidem quando mais nada decidiu.
+ *
+ * Isto sai direto da medicao: o perfil de musico despencou para 45% porque
+ * .wav disparava antes das regras de nome — e .wav pode ser sample, stem,
+ * mixagem, master ou gravacao de duas horas. A extensao diz o formato,
+ * nao diz o papel.
+ *
+ * @type {Array<[string[], string, number]>}
+ */
+const EXT_AMBIGUA = [
+  [['.mp3', '.wav', '.flac', '.aac', '.m4a', '.aiff', '.ogg'], 'audio', 0.6],
+  [['.mp4', '.mov', '.mkv', '.avi', '.webm', '.m4v', '.mxf'], 'video', 0.58],
+  [['.zip', '.rar', '.7z', '.tar', '.gz'], 'arquivo-comprimido', 0.55],
+  [['.psd', '.ai', '.indd'], 'arquivo-design', 0.7]
 ];
 
 /**
  * Padrões de nome. Cobre PT e EN porque o sistema do usuário pode estar em qualquer um.
  * contentSafe:false = só faz sentido no nome, nunca dentro do texto.
- * @type {Array<{re:RegExp, tipo:string, conf:number, name?:string, contentSafe?:boolean}>}
+ * @type {Array<{re:RegExp, tipo:string, conf:number, name?:string, contentSafe?:boolean, soImagem?:boolean, soVideo?:boolean}>}
  */
 const NAME_RULES = [
   { re: /^(screenshot|captura de tela|screen shot|cleanshot)/i, tipo: 'captura', conf: 0.96, name: 'captura-de-tela', contentSafe: false },
-  { re: /^(img|dsc|dscn|dscf|p\d{7}|gopro|pxl|gx\d{6})[_-]?\d{3,}/i, tipo: 'foto-camera', conf: 0.9, contentSafe: false },
+  { re: /^(img|dsc|dscn|dscf|p\d{7}|pxl)[_-]?\d{3,}/i, tipo: 'foto-camera', conf: 0.9, contentSafe: false, soImagem: true },
+  { re: /^(gx|gh|go?pr|dji|c|a\d{2}|mvi|clip)[_-]?\d{3,}/i, tipo: 'video-bruto', conf: 0.86, contentSafe: false, soVideo: true },
   { re: /^(whatsapp|whats)[ _-]?(image|video|audio|ptt)/i, tipo: 'foto-whatsapp', conf: 0.94, contentSafe: false },
   { re: /\b(boleto|fatura|invoice)\b/i, tipo: 'fatura', conf: 0.9 },
   { re: /\b(recibo|nota[ _-]?fiscal|nfe|danfe|comprovante|pix)\b/i, tipo: 'nota-fiscal', conf: 0.88 },
@@ -87,12 +117,25 @@ const NAME_RULES = [
   { re: /\b(post|feed|carrossel|stories)\b/i, tipo: 'arte-social', conf: 0.8 },
   { re: /\b(scan|digitalizado|digitalizacao)\b/i, tipo: 'scan', conf: 0.85 },
   { re: /\b(trilha|soundtrack|bgm|musica[ _-]?fundo)\b/i, tipo: 'trilha', conf: 0.86 },
+  { re: /\b(kick|snare|hat|clap|impacto|riser|sample|oneshot|one.?shot)\b/i, tipo: 'efeito-sonoro', conf: 0.84, contentSafe: false },
+  { re: /\b(take|gravacao|grava[çc][ãa]o|voz|vocal)\b|\b(zoom|tascam|h\dn)\d+/i, tipo: 'audio-bruto', conf: 0.82, contentSafe: false },
   { re: /\b(narracao|locucao|voiceover|vo\b)\b/i, tipo: 'audio-bruto', conf: 0.84 },
   { re: /^(zoom|meet|teams|gmt\d)[_-]/i, tipo: 'reuniao', conf: 0.85, contentSafe: false },
   { re: /\b(notas? da reuniao|ata de reuniao|meeting notes)\b/i, tipo: 'reuniao', conf: 0.84 },
   { re: /\b(relatorio|report) (trimestral|mensal|anual|de)\b/i, tipo: 'relatorio', conf: 0.84 },
   { re: /\b(final|master|aprovado|entrega)\b.*\.(mp4|mov)$/i, tipo: 'video-entrega', conf: 0.8, contentSafe: false },
-  { re: /\b(abstract|introduction|we present|arxiv)\b/i, tipo: 'artigo', conf: 0.8 }
+  { re: /\b(abstract|introduction|we present|arxiv)\b/i, tipo: 'artigo', conf: 0.8 },
+  { re: /\b(b.?roll|cutaway|insert)\b/i, tipo: 'broll', conf: 0.88, contentSafe: false },
+  { re: /\b(rascunho|sketch|esboco|esbo[çc]o|estudo|study)\b/i, tipo: 'rascunho', conf: 0.82 },
+  { re: /\b(lineart|line.?art|arte.?final|artefinal)\b/i, tipo: 'ilustracao', conf: 0.84 },
+  { re: /\b(stem|stems|multipista)\b/i, tipo: 'stem', conf: 0.86, contentSafe: false },
+  { re: /\b(mixagem|mixdown|\bmix\b|rough.?mix)\b/i, tipo: 'mixagem', conf: 0.82, contentSafe: false },
+  { re: /\b(master|masterizado|mastered)\b/i, tipo: 'master-audio', conf: 0.8, contentSafe: false },
+  { re: /\b(hdri?|equirect|panorama)\b/i, tipo: 'hdri', conf: 0.85, contentSafe: false },
+  { re: /\b(albedo|basecolor|base.?color|roughness|normal.?map|metallic|displacement|\bao\b)\b/i, tipo: 'textura', conf: 0.88, contentSafe: false },
+  { re: /\b(beauty|diffuse|specular|cryptomatte|denoise|aov)\b/i, tipo: 'render', conf: 0.84, contentSafe: false },
+  { re: /\b(pre.?render|prerender|preview.?render)\b/i, tipo: 'pre-render', conf: 0.85, contentSafe: false },
+  { re: /\b(rig|rigged|skeleton|armature)\b/i, tipo: 'rig', conf: 0.82, contentSafe: false }
 ];
 
 /** @type {Array<[RegExp, string, number]>} */
@@ -107,6 +150,9 @@ const MIME_FALLBACK = [
   [/^application\/pdf/, 'documento', 0.35],
   [/^text\//, 'texto', 0.4]
 ];
+
+const IMG_EXT = new Set(['.jpg', '.jpeg', '.png', '.heic', '.heif', '.gif', '.webp', '.tif', '.tiff']);
+const VID_EXT = new Set(['.mp4', '.mov', '.mkv', '.avi', '.webm', '.m4v', '.mxf', '.braw', '.r3d']);
 
 export function domainOf(url) {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return null; }
@@ -128,11 +174,13 @@ export function domainOf(url) {
  *
  * @param {{name:string, ext:string, mime?:string|null, whereFroms?:string[],
  *          exif?:{Make?:string,Model?:string,DateTimeOriginal?:Date},
- *          shape?:{hint:string,confidence:number,note:string}|null, text?:string}} ctx
+ *          shape?:{hint:string,confidence:number,note:string}|null,
+ *          media?:{hint:string,confidence:number,note:string}|null,
+ *          vizinhos?:{dominante:string|null,fracao:number,total:number}|null, text?:string}} ctx
  * @returns {RuleVerdict|null}
  */
 export function classify(ctx) {
-  const { name, ext, mime, whereFroms = [], exif = {}, shape = null } = ctx;
+  const { name, ext, mime, whereFroms = [], exif = {}, shape = null, media = null, vizinhos = null } = ctx;
 
   const flatten = (str) => String(str)
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -150,14 +198,22 @@ export function classify(ctx) {
 
   // 1. Extensão inequívoca vem primeiro: .cr3 é RAW, ponto final. Nenhum nome
   //    de arquivo desmente isso, e é o sinal que salva os perfis profissionais.
-  for (const [exts, tipo, conf] of EXT_MAP) {
+  for (const [exts, tipo, conf] of EXT_DECISIVA) {
     if (exts.includes(ext)) return veredito(tipo, conf, `ext:${ext}`, `${ext} é sempre ${tipo}`);
   }
 
   // 2. Padrão de nome. Vem ANTES da origem, e a ordem foi decidida medindo:
   // "boleto_condominio.pdf" baixado do site do banco é um boleto, não um
   // "arquivo financeiro". O nome é mais específico que o domínio quase sempre.
+  // Nome de camera so vale junto com a extensao certa. "IMG_1234.MOV" e video,
+  // e "GX010203.MP4" da GoPro tambem — a mesma familia de prefixo serve para
+  // foto e para clipe, e so a extensao desempata.
+  const ehImagem = /^image\//.test(mime || '') || IMG_EXT.has(ext);
+  const ehVideo = /^video\//.test(mime || '') || VID_EXT.has(ext);
+
   for (const r of NAME_RULES) {
+    if (r.soImagem && !ehImagem) continue;
+    if (r.soVideo && !ehVideo) continue;
     if (r.re.test(flat) || r.re.test(flatNoDate) || r.re.test(name)) {
       return veredito(r.tipo, r.conf, `nome:${r.tipo}`, `O nome indica ${r.tipo}`, { nameHint: r.name });
     }
@@ -197,12 +253,39 @@ export function classify(ctx) {
   //    e imagem sem os dois é justamente o caso que mais aparece.
   if (shape) {
     const mapa = { captura: 'captura', documento: 'scan', social: 'arte-social',
-                   arte: 'banner', foto: 'foto-camera', recorte: 'captura' };
+                   arte: 'banner', foto: 'foto-camera', recorte: 'captura',
+                   textura: 'textura', 'arte-impressao': 'ilustracao' };
     const tipo = mapa[shape.hint];
     if (tipo) return veredito(tipo, shape.confidence, `forma:${shape.hint}`, shape.note);
   }
 
-  // 7. Chute por tipo real. Confiança baixa de propósito: vira pergunta.
+  // 7. Cabeçalho de mídia: duração, resolução e presença de áudio.
+  //
+  // Nenhuma extensão distingue um .mov de 6 segundos em 4K sem áudio (B-roll)
+  // de um .mov de 12 minutos com áudio (vídeo pronto). O cabeçalho distingue,
+  // e custa uma leitura de alguns kilobytes.
+  if (media) {
+    return veredito(media.hint, media.confidence, `midia:${media.hint}`, media.note);
+  }
+
+  // 8. Extensão ambígua. Só agora, depois que nome, origem, conteúdo e
+  // cabeçalho já tiveram sua chance.
+  for (const [exts, tipo, conf] of EXT_AMBIGUA) {
+    if (exts.includes(ext)) return veredito(tipo, conf, `ext-ambigua:${ext}`, `É ${ext}, mas o papel não está claro`);
+  }
+
+  // 9. Gravidade da pasta. Último recurso antes do chute: se o arquivo está
+  // cercado de iguais, ele é um deles.
+  if (vizinhos && vizinhos.fracao > 0.75 && vizinhos.total >= 8 && vizinhos.dominante === ext) {
+    for (const [exts, tipo, conf] of [...EXT_DECISIVA, ...EXT_AMBIGUA]) {
+      if (exts.includes(vizinhos.dominante)) {
+        return veredito(tipo, Math.min(conf, 0.72), 'vizinhanca',
+          `${Math.round(vizinhos.fracao * 100)}% da pasta é ${ext}`);
+      }
+    }
+  }
+
+  // 10. Chute por tipo real. Confiança baixa de propósito: vira pergunta.
   for (const [re, tipo, conf] of MIME_FALLBACK) {
     if (re.test(mime || '')) {
       return veredito(tipo, conf, `mime:${mime}`, `É ${mime}, mas não sei do que se trata`);

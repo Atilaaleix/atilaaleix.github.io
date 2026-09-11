@@ -11,6 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { makePdf, makeDocx, makePptx, makePng, makeJpeg, makeZip } from '../platform/shared/make.js';
+import { makeMp4, makeWav, makeExr, makeProjeto } from '../platform/shared/makemedia.js';
 
 let seed = 20260911;
 /** Aleatório com semente: o mesmo corpus toda vez, senão não dá para comparar rodadas. */
@@ -29,6 +30,10 @@ const PROJETOS = ['institucional', 'lancamento-verao', 'serie-documental', 'come
 const TEMAS = ['tipografia', 'cores', 'embalagem', 'interface', 'editorial', 'fotografia'];
 const STACKS = ['react', 'postgres', 'swift', 'rust', 'docker', 'aws'];
 const MARCAS = ['nuvem-cafe', 'atlas-tenis', 'vero-agua'];
+const SHOTS = ['sh010', 'sh020', 'sh030', 'sh040', 'sh050'];
+const PASSES = ['beauty', 'diffuse', 'specular', 'cryptomatte', 'denoise'];
+const MAPAS = ['albedo', 'roughness', 'normal', 'metallic', 'displacement', 'ao'];
+const FAIXAS = ['abertura', 'refrao-alt', 'interlude', 'faixa-titulo', 'bonus'];
 const SOBRENOMES = ['silva', 'okamoto', 'ferreira', 'duarte', 'nogueira', 'batista'];
 
 /**
@@ -55,8 +60,14 @@ const ORIGENS = {
   arteQuadrada: ['https://www.canva.com/design', 'https://unsplash.com/photos/abc'],
   capturaSemNome: ['https://dribbble.com/shots/9910', 'https://www.behance.net/gallery/778'],
   arquivoZip: ['https://wetransfer.com/downloads/abc', 'https://drive.google.com/file/d/1a2b'],
-  audio: ['https://artlist.io/song/1200', 'https://www.epidemicsound.com/track/xy'],
-  video: ['https://www.pexels.com/video/9910']
+  sample: ['https://www.epidemicsound.com/track/xy', 'https://splice.com/sounds/pack'],
+  presetAudio: ['https://www.native-instruments.com/library'],
+  textura: ['https://ambientcg.com/view?id=Wood023', 'https://polyhaven.com/a/wood_planks'],
+  hdri: ['https://polyhaven.com/a/studio_small_08'],
+  modelo3d: ['https://sketchfab.com/models/abc', 'https://www.turbosquid.com/3d-models/xy'],
+  mogrt: ['https://www.motionarray.com/templates/1200'],
+  pincel: ['https://procreate.com/brushes', 'https://www.brusheezy.com/brushes/1200'],
+  broll: ['https://www.pexels.com/video/9910', 'https://www.artgrid.io/clip/331']
 };
 
 const TELAS = [[3024, 1964], [2560, 1440], [1920, 1080], [1512, 982], [3456, 2234], [1179, 2556]];
@@ -70,6 +81,10 @@ function dataISO() {
 // pune o classificador por acertar. Pessoa nenhuma guarda foto de 2024 em
 // "Fotos/2026" — e era exatamente isso que o gerador estava fazendo.
 let ultimoAnoFoto = null;
+/** @type {{chave:string,i:number,fim:number}|null} */
+let seqAtual = null;
+/** @type {{chave:string,ext:string,i:number,fim:number}|null} */
+let cacheAtual = null;
 function dataExif() {
   ultimoAnoFoto = 2024 + Math.floor(rnd() * 3);
   return `${ultimoAnoFoto}:${pad(int(1, 12))}:${pad(int(1, 28))} ${pad(int(8, 22))}:${pad(int(0, 59))}:${pad(int(0, 59))}`;
@@ -191,6 +206,63 @@ const A = {
 
   instalador: () => ({ nome: sujar(`${pick(['Figma', 'Docker', 'Slack', 'Obsidian', 'Rectangle', 'Chrome'])}-${int(1, 9)}.${int(0, 20)}.${pick(['dmg', 'pkg', 'exe', 'msi'])}`), buf: HEAD[chance(0.6) ? 'dmg' : 'exe'] }),
   arquivoZip: () => ({ nome: sujar(`${pick(['assets', 'entrega', 'backup', 'fotos'])}_${dataISO()}.zip`), buf: HEAD.zip }),
+  // --- 3D -------------------------------------------------------------------
+  projeto3d: () => ({ nome: sujar(`${pick(PROJETOS)}${chance(0.4) ? '_v' + int(1, 8) : ''}${pick(['.blend', '.c4d', '.ma', '.max', '.hip'])}`), buf: makeProjeto('BLENDER') }),
+  cena3d: () => ({ nome: sujar(`${pick(SHOTS)}_${pick(['layout', 'anim', 'lighting'])}${pick(['.usd', '.usda', '.abc'])}`), buf: makeProjeto('PXR-USDC') }),
+  modelo3d: () => ({ nome: sujar(`${pick(['cadeira', 'predio', 'personagem', 'arma', 'arvore', 'carro'])}_${pick(['hi', 'lo', 'game'])}${pick(['.fbx', '.obj', '.glb', '.stl'])}`), buf: HEAD.bin }),
+  textura: () => ({ nome: `${pick(['madeira', 'metal', 'concreto', 'tecido', 'pele'])}_${pick(MAPAS)}_${pick(['2k', '4k', '8k'])}.png`, buf: makePng(2048, 2048) }),
+  material: () => ({ nome: sujar(`${pick(['metal-escovado', 'verniz', 'tijolo', 'couro'])}${pick(['.spp', '.sbsar', '.mtlx'])}`), buf: HEAD.bin }),
+  cache3d: () => {
+    if (!cacheAtual || cacheAtual.i > cacheAtual.fim) {
+      cacheAtual = { chave: `${pick(['fumaca', 'agua', 'destruicao', 'pano'])}`, ext: pick(['.vdb', '.bgeo']), i: 1, fim: int(30, 180) };
+    }
+    const nome = `${cacheAtual.chave}_${pad(cacheAtual.i, 4)}${cacheAtual.ext}`;
+    cacheAtual.i++;
+    return { nome, buf: HEAD.bin };
+  },
+  hdri: () => ({ nome: `${pick(['estudio', 'por-do-sol', 'nublado', 'hangar', 'praca'])}_${pick(['2k', '4k'])}.hdr`, buf: Buffer.from('#?RADIANCE\n', 'utf8') }),
+  rig: () => ({ nome: `${pick(['personagem', 'mao', 'rosto', 'quadrupede'])}_rig_v${int(1, 6)}.ma`, buf: makeProjeto('MAYA') }),
+  // Render sai em sequencia CONTIGUA, nao em numero sorteado. Gerar aleatorio
+  // aqui fazia o corpus nao ter uma unica sequencia de verdade — e o detector
+  // de sequencia nunca era exercitado.
+  renderSeq: () => {
+    if (!seqAtual || seqAtual.i > seqAtual.fim) {
+      seqAtual = { chave: `${pick(SHOTS)}_${pick(PASSES)}`, i: 1, fim: int(40, 240) };
+    }
+    const nome = `${seqAtual.chave}.${pad(seqAtual.i, 4)}.exr`;
+    seqAtual.i++;
+    return { nome, buf: makeExr() };
+  },
+
+  // --- motion ---------------------------------------------------------------
+  projetoMotion: () => ({ nome: sujar(`${pick(PROJETOS)}_${pick(['comp', 'v2', 'final'])}${pick(['.aep', '.aepx'])}`), buf: makeProjeto('RIFX') }),
+  mogrt: () => ({ nome: `${pick(['lower-third', 'cartela', 'transicao', 'contador'])}.mogrt`, buf: HEAD.zip }),
+  preRender: () => { const { buf } = makeMp4({ durationSec: int(4, 25), w: 1920, h: 1080, audio: false, mbps: 90 }); return { nome: `prerender_${pick(PROJETOS)}_${pad(int(1, 40), 3)}.mov`, buf }; },
+
+  // --- video com duracao de verdade ------------------------------------------
+  broll: () => { const { buf } = makeMp4({ durationSec: int(3, 20), w: chance(0.6) ? 3840 : 1920, h: chance(0.6) ? 2160 : 1080, audio: false, mbps: int(80, 160) }); return { nome: pick([`${pick(['A', 'B', 'C'])}${int(1, 30)}${pad(int(1, 99), 4)}.MP4`, `GX${pad(int(1, 99), 6)}.MP4`, `broll_${pick(['cidade', 'mao', 'cafe', 'janela'])}_${int(1, 60)}.mov`]), buf }; },
+  gravacaoTela: () => { const [w, h] = pick(TELAS); const { buf } = makeMp4({ durationSec: int(90, 900), w, h, audio: false, mbps: 5 }); return { nome: sujar(`gravacao_${dataISO()}_${pad(int(1, 40), 2)}.mov`), buf }; },
+  videoExport: () => { const { buf } = makeMp4({ durationSec: int(180, 900), w: 1920, h: 1080, audio: true, mbps: int(8, 20) }); return { nome: sujar(`${pick(PROJETOS)}_${pick(['final', 'v3', 'aprovado', 'master'])}_${pick(['1080p', '4k'])}.mp4`), buf }; },
+  gravacaoLonga: () => { const { buf } = makeMp4({ durationSec: int(25, 120) * 60, w: 1920, h: 1080, audio: true, mbps: 6 }); return { nome: sujar(`${pick(['live', 'entrevista', 'aula', 'podcast'])}_${dataISO()}.mp4`), buf }; },
+
+  // --- audio com duracao de verdade -------------------------------------------
+  projetoAudio: () => ({ nome: sujar(`${pick(FAIXAS)}${chance(0.5) ? '_v' + int(1, 9) : ''}${pick(['.logicx', '.als', '.flp', '.rpp', '.ptx'])}`), buf: makeProjeto('DAW') }),
+  gravacaoAudio: () => ({ nome: pick([`ZOOM${pad(int(1, 99), 4)}.WAV`, `take_${pad(int(1, 80), 3)}.wav`, `voz_${pick(FAIXAS)}.wav`]), buf: makeWav({ durationSec: int(20, 400) }) }),
+  stem: () => ({ nome: `${pick(FAIXAS)}_stem_${pick(['bateria', 'baixo', 'voz', 'guitarra', 'teclas'])}.wav`, buf: makeWav({ durationSec: int(120, 300) }) }),
+  mixagem: () => ({ nome: sujar(`${pick(FAIXAS)}_mix_v${int(1, 14)}.wav`), buf: makeWav({ durationSec: int(120, 300) }) }),
+  masterAudio: () => ({ nome: `${pick(FAIXAS)}_master${chance(0.4) ? '_24bit' : ''}.wav`, buf: makeWav({ durationSec: int(120, 300) }) }),
+  sample: () => ({ nome: `${pick(['kick', 'snare', 'hat', 'clap', 'impacto', 'riser'])}_${pad(int(1, 99), 2)}.wav`, buf: makeWav({ durationSec: rnd() * 3 + 0.3 }) }),
+  midi: () => ({ nome: `${pick(['progressao', 'melodia', 'groove', 'baixo'])}_${int(1, 40)}.mid`, buf: Buffer.from('MThd', 'latin1') }),
+  presetAudio: () => ({ nome: `${pick(['pad-quente', 'lead-agudo', 'bass-808', 'strings'])}${pick(['.nki', '.adg', '.fxp'])}`, buf: HEAD.bin }),
+
+  // --- ilustracao -------------------------------------------------------------
+  ilustracao: () => ({ nome: sujar(`${pick(['capa', 'personagem', 'cena', 'poster', 'mascote'])}_${pick(PROJETOS)}${pick(['.procreate', '.clip', '.psd', '.kra'])}`), buf: makeProjeto('PROCREATE') }),
+  rascunho: () => ({ nome: sujar(`${pick(['rascunho', 'sketch', 'esboco', 'estudo'])}_${pad(int(1, 90), 3)}.${pick(['png', 'jpg'])}`), buf: chance(0.5) ? makePng(1600, 2000) : makeJpeg(1600, 2000) }),
+  lineart: () => ({ nome: sujar(`${pick(PROJETOS)}_lineart${chance(0.4) ? '_v' + int(1, 5) : ''}.png`), buf: makePng(3000, 4000) }),
+  arteFinal: () => ({ nome: sujar(`${pick(PROJETOS)}_arte-final_${pick(['web', 'print', 'a3'])}.png`), buf: makePng(3508, 4961) }),
+  pincel: () => ({ nome: `${pick(['carvao', 'aquarela', 'textura-papel', 'guache'])}.${pick(['abr', 'brushset'])}`, buf: HEAD.bin }),
+  paleta: () => ({ nome: `paleta_${pick(['outono', 'pastel', 'neon', 'terra'])}.${pick(['ase', 'aco'])}`, buf: HEAD.bin }),
+
   livro: () => { textoAtual = 'artigo'; return { nome: sujar(`${pick(['refactoring', 'shape-up', 'design-systems', 'atomic-habits'])}.epub`), buf: HEAD.zip }; }
 };
 
@@ -223,11 +295,12 @@ const PERFIS = {
     ['Trabalho/Propostas', 'proposta', 30], ['Instaladores', 'instalador', 15]
   ],
   videomaker: [
-    ['Projetos/{projeto}/01-Captacao', 'video', 700],
-    ['Projetos/{projeto}/02-Audio', 'audio', 180],
+    ['Projetos/{projeto}/01-Captacao', 'broll', 500],
+    ['Projetos/{projeto}/01-Captacao', 'video', 200],
+    ['Projetos/{projeto}/02-Audio', 'gravacaoAudio', 180],
     ['Projetos/{projeto}/03-Graficos', 'design', 90],
     ['Projetos/{projeto}/04-Edicao', 'projetoEdicao', 60],
-    ['Projetos/{projeto}/05-Entregas', 'videoEntrega', 80],
+    ['Projetos/{projeto}/05-Entregas', 'videoExport', 80],
     ['Projetos/{projeto}/06-Aprovacao', 'capturaSemNome', 50],
     ['Biblioteca/Trilhas', 'audio', 200], ['Biblioteca/LUTs', 'lut', 60],
     ['Biblioteca/Stock', 'video', 120],
@@ -256,14 +329,70 @@ const PERFIS = {
     ['Capturas', 'captura', 220], ['Financeiro/Notas', 'nota', 35],
     ['Carreira', 'curriculo', 5], ['Downloads/Arquivos', 'arquivoZip', 40]
   ],
+  artista3d: [
+    ['Projetos/{projeto}/01-Cena', 'projeto3d', 70], ['Projetos/{projeto}/01-Cena', 'cena3d', 40],
+    ['Projetos/{projeto}/02-Modelos', 'modelo3d', 150],
+    ['Projetos/{projeto}/03-Texturas', 'textura', 320],
+    ['Projetos/{projeto}/04-Cache', 'cache3d', 240],
+    ['Projetos/{projeto}/05-Render', 'renderSeq', 900],
+    ['Projetos/{projeto}/06-Composicao', 'projetoMotion', 40],
+    ['Projetos/{projeto}/07-Entregas', 'videoExport', 50],
+    ['Biblioteca/Modelos', 'modelo3d', 120], ['Biblioteca/Texturas', 'textura', 180],
+    ['Biblioteca/HDRI', 'hdri', 60], ['Biblioteca/Materiais', 'material', 90],
+    ['Biblioteca/Rigs', 'rig', 40],
+    ['Referencias/{tema}', 'capturaSemNome', 160], ['Portfolio', 'arteQuadrada', 40],
+    ['Clientes/{cliente}/Briefing', 'briefing', 25], ['Clientes/{cliente}/Contratos', 'contrato', 20],
+    ['Financeiro/Notas', 'nota', 35], ['Capturas', 'captura', 110], ['Instaladores', 'instalador', 12]
+  ],
+  motion: [
+    ['Projetos/{projeto}/01-Projeto', 'projetoMotion', 120],
+    ['Projetos/{projeto}/02-Assets', 'logoPequeno', 120],
+    ['Projetos/{projeto}/02-Assets', 'banner', 80],
+    ['Projetos/{projeto}/02-Assets', 'broll', 180],
+    ['Projetos/{projeto}/03-Audio', 'gravacaoAudio', 90],
+    ['Projetos/{projeto}/04-PreRender', 'preRender', 260],
+    ['Projetos/{projeto}/05-Entregas', 'videoExport', 110],
+    ['Biblioteca/Templates', 'mogrt', 80], ['Biblioteca/Trilhas', 'sample', 40],
+    ['Biblioteca/EfeitosSonoros', 'sample', 160], ['Biblioteca/Texturas', 'textura', 120],
+    ['Referencias/{tema}', 'capturaSemNome', 150], ['Portfolio', 'videoExport', 40],
+    ['Clientes/{cliente}/Briefing', 'briefing', 30], ['Clientes/{cliente}/Contratos', 'contrato', 25],
+    ['Financeiro/Notas', 'nota', 35], ['Capturas', 'captura', 120]
+  ],
+  musico: [
+    ['Projetos/{projeto}/01-Projeto', 'projetoAudio', 110],
+    ['Projetos/{projeto}/02-Gravacoes', 'gravacaoAudio', 420],
+    ['Projetos/{projeto}/03-Stems', 'stem', 380],
+    ['Projetos/{projeto}/04-Mixagens', 'mixagem', 260],
+    ['Projetos/{projeto}/05-Masters', 'masterAudio', 90],
+    ['Biblioteca/Samples', 'sample', 520], ['Biblioteca/MIDI', 'midi', 140],
+    ['Biblioteca/Presets', 'presetAudio', 120],
+    ['Referencias', 'sample', 60], ['Portfolio', 'masterAudio', 40],
+    ['Shows', 'gravacaoLonga', 40],
+    ['Clientes/{cliente}/Contratos', 'contrato', 25],
+    ['Financeiro/Notas', 'nota', 35], ['Capturas', 'captura', 90]
+  ],
+  ilustrador: [
+    ['Trabalhos/{projeto}/01-Rascunhos', 'rascunho', 420],
+    ['Trabalhos/{projeto}/02-Lineart', 'lineart', 200],
+    ['Trabalhos/{projeto}/03-Cor', 'ilustracao', 260],
+    ['Trabalhos/{projeto}/04-Final', 'arteFinal', 180],
+    ['Trabalhos/{projeto}/05-Entregas', 'arteQuadrada', 120],
+    ['Biblioteca/Pinceis', 'pincel', 90], ['Biblioteca/Paletas', 'paleta', 50],
+    ['Biblioteca/Texturas', 'textura', 80],
+    ['Estudos/{ano}', 'rascunho', 220], ['Referencias/{tema}', 'capturaSemNome', 200],
+    ['Portfolio', 'arteFinal', 60],
+    ['Clientes/{cliente}/Briefing', 'briefing', 30], ['Clientes/{cliente}/Contratos', 'contrato', 20],
+    ['Financeiro/Notas', 'nota', 35], ['Capturas', 'captura', 100]
+  ],
   youtuber: [
     ['Canal/{episodio}/01-Roteiro', 'roteiro', 80],
-    ['Canal/{episodio}/02-Bruto', 'video', 600],
+    ['Canal/{episodio}/02-Bruto', 'gravacaoTela', 200],
+    ['Canal/{episodio}/02-Bruto', 'broll', 400],
     ['Canal/{episodio}/03-Edicao', 'projetoEdicao', 80],
     ['Canal/{episodio}/04-Miniatura', 'miniatura', 200],
-    ['Canal/{episodio}/05-Publicado', 'videoEntrega', 90],
+    ['Canal/{episodio}/05-Publicado', 'videoExport', 90],
     ['Canal/{episodio}/06-Legendas', 'legenda', 120],
-    ['Biblioteca/Trilhas', 'audio', 160], ['Biblioteca/Vinhetas', 'video', 60],
+    ['Biblioteca/Trilhas', 'sample', 160], ['Biblioteca/Vinhetas', 'broll', 60],
     ['Marca/Logos', 'logoPequeno', 60], ['Marca/Templates', 'design', 50],
     ['Patrocinios/{marca}/Contratos', 'contrato', 30],
     ['Patrocinios/{marca}/Material', 'design', 60],
@@ -277,6 +406,7 @@ function preencher(folder) {
     .replace('{cliente}', () => pick(CLIENTES))
     .replace('{projeto}', () => pick(PROJETOS))
     .replace('{tema}', () => pick(TEMAS))
+    .replace('{shot}', () => pick(SHOTS))
     .replace('{stack}', () => pick(STACKS))
     .replace('{marca}', () => pick(MARCAS))
     .replace('{ano}', () => String(ultimoAnoFoto || 2024 + Math.floor(rnd() * 3)))
