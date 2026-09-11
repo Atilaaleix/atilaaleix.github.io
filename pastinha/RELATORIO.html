@@ -67,7 +67,7 @@ body{
   margin:0;
   -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:0 96px}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px;padding-block:0 96px}
 
 /* ---- capa ---- */
 .capa{border-bottom:2px solid var(--ink);padding-block:56px 26px;margin-bottom:44px}
@@ -93,8 +93,13 @@ h1 em{font-style:normal;color:var(--muted);display:block;font-size:.46em;letter-
 .meta b{color:var(--ink);font-weight:500}
 
 /* ---- layout ---- */
-.corpo{display:grid;grid-template-columns:196px minmax(0,1fr);gap:52px;align-items:start}
-@media(max-width:900px){.corpo{grid-template-columns:1fr;gap:0}}
+.corpo{display:grid;grid-template-columns:188px minmax(0,1fr);gap:52px;align-items:start}
+/* min-width:0 e o conserto: sem ele o item de grid nao encolhe abaixo do
+   min-content do filho mais largo, e a tabela de 9 colunas da secao 10
+   arrastava a coluna de texto inteira para fora da tela no celular. */
+.corpo > *{min-width:0}
+main,main section{min-width:0}
+@media(max-width:900px){.corpo{grid-template-columns:minmax(0,1fr);gap:0}}
 
 nav.indice{position:sticky;top:18px;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;line-height:1.5}
 nav.indice .t{text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-size:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
@@ -126,7 +131,10 @@ p{margin:0 0 15px;max-width:66ch}
 ul,ol{max-width:66ch;padding-left:20px;margin:0 0 15px}
 li{margin-bottom:7px}
 code,.m{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.87em;
-  background:var(--card2);padding:1.5px 5px;border-radius:2px;word-break:break-word}
+  background:var(--card2);padding:1.5px 5px;border-radius:2px;overflow-wrap:break-word}
+/* Dentro de tabela nao parte no meio da palavra: a tabela ja rola sozinha,
+   e "mediainfo.js" quebrado em "mediainfo.j / s" nao se le. */
+td .m,th .m{overflow-wrap:normal;word-break:normal}
 strong{font-weight:600}
 a{color:var(--blue)}
 hr{border:0;border-top:1px solid var(--line);margin:40px 0}
@@ -155,7 +163,7 @@ pre .r{color:var(--stamp)}
 
 .cascata{counter-reset:c;list-style:none;padding:0;margin:20px 0;max-width:none}
 .cascata li{
-  counter-increment:c;display:grid;grid-template-columns:30px 1fr;gap:14px;
+  counter-increment:c;display:grid;grid-template-columns:30px minmax(0,1fr);gap:14px;
   padding:10px 0;border-bottom:1px solid var(--line2);margin:0;max-width:none;
 }
 .cascata li:last-child{border-bottom:0}
@@ -211,7 +219,7 @@ pre .r{color:var(--stamp)}
 .erros{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));margin:22px 0}
 
 .bugs{margin:20px 0;border:1px solid var(--line);border-radius:3px;overflow:hidden}
-.bug{display:grid;grid-template-columns:28px 1fr;gap:13px;padding:11px 15px;
+.bug{display:grid;grid-template-columns:28px minmax(0,1fr);gap:13px;padding:11px 15px;
   background:var(--card);border-bottom:1px solid var(--line2)}
 .bug:last-child{border-bottom:0}
 .bug .i{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);
@@ -360,8 +368,8 @@ pre .r{color:var(--stamp)}
 <b>const</b> ehImagem = /^image\//.test(mime || '') || IMG_EXT.has(ext);
 <b>const</b> ehVideo  = /^video\//.test(mime || '') || VID_EXT.has(ext);
 <b>for</b> (<b>const</b> r <b>of</b> NAME_RULES) {
-  <b>if</b> (r.soImagem && !ehImagem) <b>continue</b>;
-  <b>if</b> (r.soVideo  && !ehVideo)  <b>continue</b>;
+  <b>if</b> (r.soImagem &amp;&amp; !ehImagem) <b>continue</b>;
+  <b>if</b> (r.soVideo  &amp;&amp; !ehVideo)  <b>continue</b>;
   ...
 }</pre>
   <p>Prefixo de câmera sozinho não basta. <span class="m">GX010203</span> é GoPro, e a GoPro escreve o mesmo prefixo em foto e em vídeo. A regra só dispara se a classe da extensão bater.</p>
