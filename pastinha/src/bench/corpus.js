@@ -599,7 +599,23 @@ export function buildCorpus({ persona = 'geral', n = 5000, root, soltos = 300, s
     let { nome, buf } = A[arquetipo]();
     // Uma fracao pequena carrega o nome do projeto no proprio nome — e isso basta,
     // porque o lote inteiro herda de quem resolveu.
-    if (sessaoDe && chance(0.12)) nome = nome.replace(/(\.[^.]+)$/, `_${sessaoDe}$1`);
+    if (sessaoDe) {
+      // Varios arquetipos ja embutem um cliente ou projeto sorteado no nome
+      // ("banner_topo_vega.png"). Numa sessao que diz pertencer a "lumina", esse
+      // nome APONTA PARA OUTRO DONO — e o classificador, acertando, era contado
+      // como errado. O gabarito e que estava mentindo.
+      //
+      // Entao: qualquer nome de cliente ou projeto embutido vira o da sessao.
+      for (const outro of [...CLIENTES, ...PROJETOS, ...FAIXAS, ...MARCAS, ...JOGOS]) {
+        if (outro !== sessaoDe && nome.toLowerCase().includes(outro)) {
+          nome = nome.replace(new RegExp(outro, 'gi'), sessaoDe);
+        }
+      }
+      // E uma fracao pequena ganha o nome explicitamente, como no mundo real.
+      if (chance(0.12) && !nome.toLowerCase().includes(String(sessaoDe).toLowerCase())) {
+        nome = nome.replace(/(\.[^.]+)$/, `_${sessaoDe}$1`);
+      }
+    }
     let full = path.join(entrada, nome);
     if (fs.existsSync(full)) full = full.replace(/(\.[^.]+)$/, `-${i}$1`);
     fs.writeFileSync(full, buf);

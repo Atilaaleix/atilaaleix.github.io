@@ -149,6 +149,36 @@ export function agrupar(propostas, { minimoPorTipo = 8, janelaMs = JANELA_SESSAO
 }
 
 /**
+ * A importacao inteira, ignorando para qual subpasta cada arquivo vai.
+ *
+ * Uma sessao de trabalho e do MESMO cliente mesmo quando os arquivos se
+ * espalham: o .fig vai para Clientes/{cliente}/Trabalho e o banner vai para
+ * Clientes/{cliente}/Entregas, mas o cliente e um so. Agrupar por destino
+ * separava os dois, e ai o grupo que nao tinha nenhum arquivo nomeado ficava
+ * sem doador e caia no chute por recencia.
+ *
+ * Foi exatamente isso que derrubou os perfis de designer e de motion na
+ * medicao: 100% de preenchimento com 13% e 47% de acerto.
+ *
+ * @param {any[]} propostas
+ * @param {number} janelaMs
+ */
+export function sessoes(propostas, janelaMs = JANELA_SESSAO_MS) {
+  const comTempo = propostas.filter(p => p && !p.skip && p.mtimeMs != null)
+    .sort((a, b) => a.mtimeMs - b.mtimeMs);
+  if (comTempo.length < 3) return [];
+
+  const grupos = [];
+  let atual = [comTempo[0]];
+  for (let i = 1; i < comTempo.length; i++) {
+    if (comTempo[i].mtimeMs - atual.at(-1).mtimeMs <= janelaMs) atual.push(comTempo[i]);
+    else { if (atual.length >= 3) grupos.push(atual); atual = [comTempo[i]]; }
+  }
+  if (atual.length >= 3) grupos.push(atual);
+  return grupos;
+}
+
+/**
  * Quantas decisoes a pessoa realmente precisa tomar.
  *
  * E este o numero que o produto deve otimizar — nao "quantos arquivos ele
@@ -213,21 +243,42 @@ export function aplicarHeranca(propostas) {
   const { lotes } = agrupar(paraAgrupar, { minimoPorTipo: 3 });
   let herdaram = 0, lotesComHeranca = 0;
 
-  for (const lote of lotes) {
-    lote.propostas = lote.propostas.map(p => p.__orig || p);
-    const heranca = herdarDoLote(lote.propostas.map(p => ({ resolucao: p.instancia })));
-    if (!heranca) continue;
-    lotesComHeranca++;
-    for (const p of lote.propostas) {
+  const espalhar = (alvos, heranca, marca) => {
+    let n = 0;
+    for (const p of alvos) {
       if (!p.precisaInstancia) continue;
+      // So herda o que o destino dele realmente pede. Um arquivo que espera
+      // {cliente} nao aceita a resposta de {projeto}.
+      const pedidos = (p.slots || []);
+      if (!pedidos.length || !pedidos.every(k => k in heranca.valores)) continue;
       p.folder = preencher(p.folder, heranca.valores);
       p.slots = [];
       p.precisaInstancia = false;
       p.instancia = heranca;
       p.confidence = Math.min(p.confidence === 0.45 ? 0.82 : p.confidence, heranca.confianca);
-      p.decidedBy = (p.decidedBy || '') + '+heranca';
-      herdaram++;
+      p.decidedBy = (p.decidedBy || '') + marca;
+      n++;
     }
+    return n;
+  };
+
+  for (const lote of lotes) {
+    lote.propostas = lote.propostas.map(p => p.__orig || p);
+    const heranca = herdarDoLote(lote.propostas.map(p => ({ resolucao: p.instancia })));
+    if (!heranca) continue;
+    lotesComHeranca++;
+    herdaram += espalhar(lote.propostas, heranca, '+heranca');
   }
+
+  // Segunda passada: a sessao inteira, atravessando destinos diferentes.
+  for (const grupo of sessoes(comInstancia)) {
+    const restantes = grupo.filter(p => p.precisaInstancia);
+    if (!restantes.length) continue;
+    const heranca = herdarDoLote(grupo.map(p => ({ resolucao: p.instancia })));
+    if (!heranca) continue;
+    const n = espalhar(restantes, heranca, '+heranca-sessao');
+    if (n) { herdaram += n; lotesComHeranca++; }
+  }
+
   return { herdaram, lotes: lotesComHeranca };
 }
