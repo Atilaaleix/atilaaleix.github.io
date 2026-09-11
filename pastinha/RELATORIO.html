@@ -9,7 +9,7 @@
   --card2:#eef0ec;
   --ink:#1a1e1b;
   --ink2:#3b423d;
-  --muted:#6e746c;
+  --muted:#5f655d;
   --line:#c9cdc5;
   --line2:#d9ddd5;
   --blue:#2a4a7f;
@@ -172,12 +172,15 @@ pre .r{color:var(--stamp)}
   font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;
   color:var(--muted);padding-top:4px;font-variant-numeric:tabular-nums;
 }
-.cascata b{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px;font-weight:600;display:block}
+.cascata li>b{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px;font-weight:600;display:block}
 .cascata span{font-size:15px;color:var(--ink2)}
 
 .grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;
-  background:var(--line);border:1px solid var(--line);border-radius:3px;margin:22px 0;overflow:hidden}
-.grade div{background:var(--card);padding:15px 16px}
+  background:var(--card);border:1px solid var(--line);border-radius:3px;margin:22px 0;overflow:hidden}
+/* As linhas vem de outline nos filhos, nao de gap sobre o fundo: com gap,
+   uma fileira incompleta desenhava um retangulo solido cor de linha. */
+.grade>div{outline:1px solid var(--line)}
+.grade>div{background:var(--card);padding:15px 16px}
 .grade .k{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.1em;
   text-transform:uppercase;color:var(--muted);margin-bottom:6px}
 .grade .v{font-family:Archivo,sans-serif;font-weight:700;font-size:27px;letter-spacing:-.02em;
@@ -226,11 +229,13 @@ pre .r{color:var(--stamp)}
   padding-top:3px;font-variant-numeric:tabular-nums}
 .bug b{font-family:Archivo,sans-serif;font-weight:600;font-size:15px;display:block;margin-bottom:2px}
 .bug span{font-size:14.5px;color:var(--ink2)}
+.bug span.m{font-size:.87em}
+.bug span.no{color:var(--stamp);font-weight:600}
 .bug em{font-style:normal;color:var(--good);font-family:"IBM Plex Mono",monospace;font-size:11.5px}
 
 .pares{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1px;
-  background:var(--line);border:1px solid var(--line);border-radius:3px;margin:22px 0;overflow:hidden}
-.par{background:var(--card);padding:15px 16px}
+  background:var(--card);border:1px solid var(--line);border-radius:3px;margin:22px 0;overflow:hidden}
+.par{background:var(--card);padding:15px 16px;outline:1px solid var(--line)}
 .par .t{font-family:Archivo,sans-serif;font-weight:600;font-size:16px;margin-bottom:5px}
 .par .d{font-size:14.5px;color:var(--ink2)}
 .par .p{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);margin-top:7px}
@@ -249,9 +254,9 @@ pre .r{color:var(--stamp)}
   <h1>Pastinha<em>tudo que foi construído, medido e errado</em></h1>
   <p class="sub">Um bicho de estimação de desktop com TOC de arrumação: varre o computador, faz oito perguntas, propõe uma árvore, e a partir daí nomeia e guarda sozinho cada arquivo que chega.</p>
   <div class="meta">
-    <div><b>6.823</b> linhas</div>
+    <div><b>6.878</b> linhas</div>
     <div><b>0</b> dependências</div>
-    <div><b>207</b> extensões</div>
+    <div><b>197</b> extensões</div>
     <div><b>11</b> perfis</div>
     <div><b>219.993</b> arquivos medidos</div>
     <div>branch <b>claude/tamagotchi-file-organizer-xpa9x3</b></div>
@@ -303,7 +308,7 @@ pre .r{color:var(--stamp)}
 <section id="s2">
   <span class="num">02</span>
   <h2>Tipo não é destino</h2>
-  <p class="lede">Esta foi a descoberta de arquitetura mais cara do projeto, e ela levou o acerto de 26% para 88% sozinha.</p>
+  <p class="lede">Esta foi a descoberta de arquitetura mais cara do projeto. Na medição consolidada ela responde pela distância entre 23,5% sem saber a profissão e 81,1% sabendo.</p>
 
   <p>No começo as regras respondiam direto <em>para que pasta vai</em>. Uma regra dizia: arquivo <span class="m">.cr3</span> vai para <span class="m">Fotos/RAW</span>. E aí quebrava tudo, porque o mesmo <span class="m">.cr3</span> vai para <span class="m">Ensaios/2026/casamento-silva/RAW</span> na máquina do fotógrafo, para <span class="m">Referencias/</span> na do designer, e para <span class="m">Fotos/2026/</span> na de uma pessoa comum. Uma regra que mistura as duas coisas está errada em duas máquinas de cada três.</p>
 
@@ -312,12 +317,12 @@ pre .r{color:var(--stamp)}
     <div class="par">
       <div class="t">rules.js responde <em>o que É</em></div>
       <div class="d">Devolve um <b>tipo</b>, nunca uma pasta. <span class="m">foto-raw</span>, <span class="m">boleto</span>, <span class="m">video-bruto</span>, <span class="m">projeto-3d</span>. Isso é universal: um RAW é um RAW na máquina de qualquer pessoa do planeta.</div>
-      <div class="p">368 linhas · 207 extensões · 57 padrões de nome</div>
+      <div class="p">370 linhas · 197 extensões · 57 padrões de nome</div>
     </div>
     <div class="par">
       <div class="t">placement.js responde <em>onde VAI</em></div>
       <div class="d">Um mapa genérico de 61 tipos, mais um mapa por perfil para 10 profissões, mais o que a pessoa corrigiu à mão. Isso é pessoal e trocável sem tocar em uma única regra.</div>
-      <div class="p">247 linhas · 10 perfis · aprendizado por correção</div>
+      <div class="p">276 linhas · 10 perfis · três níveis de confiança</div>
     </div>
   </div>
 
@@ -346,7 +351,7 @@ pre .r{color:var(--stamp)}
   </div>
 
   <h3>A ordem de precedência</h3>
-  <p>Esta ordem é o coração do sistema. Ela roda de cima para baixo e para no primeiro sinal que responde. Cada posição foi escolhida por um motivo, e trocar duas de lugar quebra casos reais — a posição 9 e a posição 1 já foram invertidas por engano, e o resultado está na seção 12.</p>
+  <p>Esta ordem é o coração do sistema. Ela roda de cima para baixo e para no primeiro sinal que responde. Cada posição foi escolhida por um motivo, e trocar duas de lugar quebra casos reais — a posição 8 e a posição 2 já foram invertidas por engano, e o resultado está na seção 12.</p>
 
   <ol class="cascata">
     <li><b>extensão decisiva</b><span>Um <span class="m">.blend</span> é um projeto do Blender. Não existe interpretação alternativa.</span></li>
@@ -354,8 +359,8 @@ pre .r{color:var(--stamp)}
     <li><b>origem do download</b><span>De onde veio o arquivo, lido do atributo estendido do sistema. Funciona igual no Mac e no Windows.</span></li>
     <li><b>EXIF</b><span>Modelo da câmera, lente, data real da foto — lido direto dos bytes, sem biblioteca.</span></li>
     <li><b>palavra-chave no conteúdo</b><span>O texto de dentro do PDF ou do .docx. "Razão social", "sacado", "CNPJ".</span></li>
-    <li><b>cabeçalho de mídia</b><span>Duração e resolução lidas do <span class="m">moov/mvhd</span> do MP4 e do RIFF do WAV. Um clipe de 4 segundos é B-roll; um de 40 minutos é uma gravação.</span></li>
     <li><b>forma da imagem</b><span>Proporção e dimensão. Potência de dois quadrada é textura; 1080×1920 é story; 3:2 em 6000px é foto de câmera.</span></li>
+    <li><b>cabeçalho de mídia</b><span>Duração e resolução lidas do <span class="m">moov/mvhd</span> do MP4 e do RIFF do WAV. Um clipe de 4 segundos é B-roll; um de 40 minutos é uma gravação.</span></li>
     <li><b>extensão ambígua</b><span>Só agora. Um <span class="m">.wav</span> chamado <span class="m">master_v3.wav</span> é uma masterização, não "áudio".</span></li>
     <li><b>gravidade da pasta</b><span>O que os vizinhos são. Um arquivo solto numa pasta com 40 RAWs provavelmente é dessa sessão.</span></li>
     <li><b>mime</b><span>Chute honesto, com confiança baixa marcada como tal para que o bicho pergunte em vez de agir.</span></li>
@@ -402,10 +407,10 @@ pre .r{color:var(--stamp)}
   <div class="barras">
     <div class="barra"><div class="lab">nome</div><div class="trilho"><div class="fill" style="width:100%"></div></div><div class="val">3.721</div></div>
     <div class="barra"><div class="lab">extensão</div><div class="trilho"><div class="fill" style="width:48.1%"></div></div><div class="val">1.788</div></div>
-    <div class="barra"><div class="lab">mime <span class="dim">(fraco)</span></div><div class="trilho"><div class="fill baixo" style="width:7.6%"></div></div><div class="val">283</div></div>
+    <div class="barra"><div class="lab">mime <span class="dim">(fraco)</span></div><div class="trilho"><div class="fill baixo" style="width:7.6%"></div></div><div class="val">281</div></div>
     <div class="barra"><div class="lab">origem</div><div class="trilho"><div class="fill" style="width:7.3%"></div></div><div class="val">273</div></div>
     <div class="barra"><div class="lab">ext. ambígua</div><div class="trilho"><div class="fill" style="width:6.0%"></div></div><div class="val">224</div></div>
-    <div class="barra"><div class="lab">forma <span class="dim">(fraco)</span></div><div class="trilho"><div class="fill baixo" style="width:3.7%"></div></div><div class="val">136</div></div>
+    <div class="barra"><div class="lab">forma <span class="dim">(fraco)</span></div><div class="trilho"><div class="fill baixo" style="width:3.6%"></div></div><div class="val">135</div></div>
     <div class="barra"><div class="lab">exif</div><div class="trilho"><div class="fill" style="width:1.5%"></div></div><div class="val">54</div></div>
     <div class="barra"><div class="lab">conteúdo</div><div class="trilho"><div class="fill" style="width:1.3%"></div></div><div class="val">48</div></div>
     <div class="barra"><div class="lab">fallback <span class="dim">(0% acerto)</span></div><div class="trilho"><div class="fill baixo" style="width:0.6%"></div></div><div class="val">21</div></div>
@@ -417,19 +422,19 @@ pre .r{color:var(--stamp)}
     <tbody>
       <tr><td>nome</td><td class="n">56,4%</td><td class="n ok">83,1%</td><td>O nome do arquivo é de longe o sinal mais útil que existe.</td></tr>
       <tr><td>extensão decisiva</td><td class="n">27,1%</td><td class="n ok">92,4%</td><td>O mais confiável. Junto com o nome, cobre 83% do trabalho.</td></tr>
-      <tr><td>origem do download</td><td class="n">4,1%</td><td class="n ok">80,9%</td><td>Melhor do que eu esperava, e de graça.</td></tr>
-      <tr><td>mime</td><td class="n">4,3%</td><td class="n no">29,3%</td><td>Ruim — e por isso a confiança dele já nasce em 0,45 e faz o bicho perguntar.</td></tr>
+      <tr><td>mime</td><td class="n">4,3%</td><td class="n no">28,8%</td><td>Ruim — e por isso a confiança dele já nasce em 0,45 e faz o bicho perguntar.</td></tr>
+      <tr><td>origem do download</td><td class="n">4,1%</td><td class="n ok">81,0%</td><td>Melhor do que eu esperava, e de graça.</td></tr>
       <tr><td>extensão ambígua</td><td class="n">3,4%</td><td class="n">71,0%</td><td>Depois de separada da decisiva, ficou aceitável.</td></tr>
-      <tr><td>forma da imagem</td><td class="n">2,1%</td><td class="n no">27,2%</td><td>O sinal mais fraco que ainda está em produção. Candidato a corte.</td></tr>
+      <tr><td>forma da imagem</td><td class="n">2,0%</td><td class="n no">27,4%</td><td>O sinal mais fraco que ainda está em produção. Candidato a corte.</td></tr>
       <tr><td>exif</td><td class="n">0,8%</td><td class="n">72,2%</td><td>Pouco usado porque o nome quase sempre já resolveu antes.</td></tr>
-      <tr><td>conteúdo (mapa genérico)</td><td class="n">0,7%</td><td class="n ok">100%</td><td>Pouquíssimo volume, acerto perfeito. Subutilizado — ver seção 16.</td></tr>
+      <tr><td>conteúdo (mapa genérico)</td><td class="n">0,7%</td><td class="n ok">100%</td><td>Pouquíssimo volume, acerto perfeito. Subutilizado — ver seção 16. Fora desta linha há 55 casos em que o conteúdo decidiu sem mapa ou pelo perfil, com acerto bem menor.</td></tr>
       <tr><td>fallback</td><td class="n">0,3%</td><td class="n no">0%</td><td>Nunca acerta. Existe só para não travar, e sempre pergunta.</td></tr>
     </tbody>
   </table>
   </div>
 
   <div class="nota">
-    <p>A linha do <span class="m">mime</span> e a do <span class="m">fallback</span> são as duas mais importantes desta tabela, e não é por serem boas. Elas são <em>ruins e sabem disso</em>: a confiança baixa que carregam faz o bicho perguntar em vez de agir. É por isso que o acerto geral é 81% mas o acerto <em>quando ele age sozinho</em> é 97,3%. Sinal ruim que se declara ruim não é um defeito — é a parte do desenho que impede o estrago.</p>
+    <p>A linha do <span class="m">mime</span> e a do <span class="m">fallback</span> são as duas mais importantes desta tabela, e não é por serem boas. Elas são <em>ruins e sabem disso</em>: a confiança baixa que carregam faz o bicho perguntar em vez de agir. É por isso que o acerto geral é 81% mas o acerto <em>quando ele age sozinho</em> é 94,4%. Sinal ruim que se declara ruim não é um defeito — é a parte do desenho que impede o estrago.</p>
   </div>
 </section>
 
@@ -455,7 +460,7 @@ pre .r{color:var(--stamp)}
   </div>
 
   <h3>Acompanhantes</h3>
-  <p>Catorze extensões que só existem colada em outra: <span class="m">.xmp</span> ao lado do RAW, <span class="m">.srt</span> ao lado do vídeo, <span class="m">.thm</span> ao lado do clipe da GoPro. Elas viajam com o arquivo principal ou não viajam.</p>
+  <p>Catorze extensões que só existem coladas em outra: <span class="m">.xmp</span> ao lado do RAW, <span class="m">.srt</span> ao lado do vídeo, <span class="m">.thm</span> ao lado do clipe da GoPro. Elas viajam com o arquivo principal ou não viajam.</p>
 
   <h3>O teste que não aceita porcentagem</h3>
   <p>Todo outro número deste relatório é uma média. Este não. <span class="m">cli.js seguranca</span> monta 15 casos reais de território — asset enterrado dentro de um jogo da Steam, projeto Unity, projeto Node, repositório só com <span class="m">.git</span>, <span class="m">.xcodeproj</span>, <span class="m">.app</span>, <span class="m">.fcpbundle</span>, <span class="m">.photoslibrary</span>, catálogo do Lightroom, symlink — mais 5 arquivos de bagunça de verdade que <em>têm</em> que se mover.</p>
@@ -476,7 +481,7 @@ pre .r{color:var(--stamp)}
 
 <section id="s6">
   <span class="num">06</span>
-  <h2>Lote: 2.471 perguntas viram 63 decisões</h2>
+  <h2>Lote: 2.408 perguntas viram 60 decisões</h2>
   <p class="lede">Foi você quem derrubou a conta anterior. E estava certo em derrubar.</p>
 
   <div class="citacao">
@@ -499,9 +504,9 @@ pre .r{color:var(--stamp)}
 
   <div class="grade">
     <div><div class="k">Arquivos soltos</div><div class="v">3.300</div></div>
-    <div><div class="k">Perguntariam</div><div class="v">2.471</div></div>
-    <div><div class="k">Decisões reais</div><div class="v ok">63</div></div>
-    <div><div class="k">Fator</div><div class="v">39,2<small>×</small></div></div>
+    <div><div class="k">Perguntariam</div><div class="v">2.408</div></div>
+    <div><div class="k">Decisões reais</div><div class="v ok">60</div></div>
+    <div><div class="k">Fator</div><div class="v">40,1<small>×</small></div></div>
   </div>
 
   <p>Por perfil o fator varia de 6,3× (pessoa comum, cujos arquivos chegam avulsos e sem relação entre si) a 182× (ilustrador, que importa em bloco). A média esconde isso, e é justo dizer que o ganho é muito maior para quem trabalha por projeto do que para quem só baixa boleto.</p>
@@ -520,7 +525,7 @@ pre .r{color:var(--stamp)}
     <tbody>
       <tr><td>nome do projeto aparece no nome do arquivo</td><td class="n">+6</td><td>Quase prova.</td></tr>
       <tr><td>aparece no texto de dentro</td><td class="n">+2,5</td><td>Forte, mas pode ser menção de passagem.</td></tr>
-      <tr><td>pasta mexida recentemente</td><td class="n">×3 <span class="dim">decaindo</span></td><td>Meia-vida de 21 dias. Você trabalha no que mexeu por último.</td></tr>
+      <tr><td>pasta mexida recentemente</td><td class="n">×3 <span class="dim">decaindo</span></td><td>Constante de decaimento de 21 dias — meia-vida de ~15. Você trabalha no que mexeu por último.</td></tr>
       <tr><td>pasta cheia</td><td class="n">+0,3 <span class="dim">log</span></td><td>Peso pequeno de propósito, senão o projeto gigante de 2019 ganha para sempre.</td></tr>
     </tbody>
   </table>
@@ -574,7 +579,7 @@ pre .r{color:var(--stamp)}
   <p class="lede">Um comando, cinco passos, nenhuma instalação. É o que você vai rodar amanhã.</p>
 
   <h3>Passo 1 — varredura</h3>
-  <p><span class="m">varredura.js</span> lê o disco inteiro sem abrir nenhum arquivo: só nome, tamanho e data. Pula 30 pastas que não interessam, trata pacote do macOS como um item só, e para em 120 segundos ou 900 mil arquivos, o que vier primeiro. Ela sai com: quantos arquivos, de que tipo, quais pastas parecem projeto ou cliente, onde estão os focos de bagunça, e que profissão o disco sugere.</p>
+  <p><span class="m">varredura.js</span> lê o disco inteiro sem abrir nenhum arquivo: só nome, tamanho e data. Pula 38 pastas que não interessam, trata pacote do macOS como um item só, e para em 120 segundos ou 900 mil arquivos, o que vier primeiro. Ela sai com: quantos arquivos, de que tipo, quais pastas parecem projeto ou cliente, onde estão os focos de bagunça, e que profissão o disco sugere.</p>
 
   <h3>Passo 2 — diagnóstico antes de pedir permissão</h3>
   <p>A pessoa aprende algo sobre o próprio disco <em>antes</em> de o bicho encostar em nada. Isso é deliberado: entregar valor antes de pedir confiança.</p>
@@ -604,7 +609,7 @@ pre .r{color:var(--stamp)}
   <p>O esqueleto aparece antes de qualquer pasta nascer. Nada é criado sem a pessoa ver. Aprovado, ele executa: cria as pastas, renomeia, move, e grava tudo no diário.</p>
 
   <pre><b>57</b> eu guardo sozinho
-<b>3</b> precisam de você — mas são só <b>1</b> decisões, não 3
+<b>3</b> precisam de você — mas é só <b>1</b> decisão, não 3
 → Projetos/campanha-natal/01-Captacao/2026-09-11__a40077-campanha-natal.mp4  <span class="g">85%</span>
 → Projetos/campanha-natal/01-Captacao/2026-09-11__a220094.mp4  <span class="g">82%</span></pre>
 </section>
@@ -619,12 +624,12 @@ pre .r{color:var(--stamp)}
 
   <div class="grade">
     <div><div class="k">Arquivos</div><div class="v">219.993</div></div>
-    <div><div class="k">Duração</div><div class="v">3,4<small> min</small></div></div>
-    <div><div class="k">Pico de memória</div><div class="v">216<small> MB</small></div></div>
+    <div><div class="k">Duração</div><div class="v">3,2<small> min</small></div></div>
+    <div><div class="k">Pico de memória</div><div class="v">248<small> MB</small></div></div>
     <div><div class="k">Antes</div><div class="v">23,5<small>%</small></div></div>
     <div><div class="k">Categoria raiz</div><div class="v">81,1<small>%</small></div></div>
-    <div><div class="k">Caminho completo</div><div class="v">71,2<small>%</small></div></div>
-    <div><div class="k">Acerto quando age</div><div class="v ok">97,3<small>%</small></div></div>
+    <div><div class="k">Caminho completo</div><div class="v">71,3<small>%</small></div></div>
+    <div><div class="k">Acerto quando age</div><div class="v ok">94,4<small>%</small></div></div>
     <div><div class="k">Perfil detectado</div><div class="v">10<small>/11</small></div></div>
   </div>
 
@@ -640,17 +645,18 @@ pre .r{color:var(--stamp)}
   <table>
     <thead><tr><th>Perfil</th><th class="n">Det.</th><th class="n">Antes</th><th class="n">Raiz</th><th class="n">Caminho</th><th class="n">Age</th><th class="n">Instância</th><th class="n">Erros conf.</th><th class="n">Fator</th></tr></thead>
     <tbody>
-      <tr><td>geral</td><td class="n no">✗</td><td class="n">76,7</td><td class="n">76,7</td><td class="n">67,3</td><td class="n">97,6</td><td class="n dim">—</td><td class="n ok">0</td><td class="n">6,3×</td></tr>
-      <tr><td>designer</td><td class="n ok">✓</td><td class="n">21,3</td><td class="n">74,0</td><td class="n">66,2</td><td class="n ok">100</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">81,7×</td></tr>
-      <tr><td>videomaker</td><td class="n ok">✓</td><td class="n">6,3</td><td class="n">75,2</td><td class="n">63,0</td><td class="n ok">100</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">65,5×</td></tr>
-      <tr><td>fotógrafo</td><td class="n ok">✓</td><td class="n">5,5</td><td class="n">69,2</td><td class="n">68,5</td><td class="n ok">100</td><td class="n dim">—</td><td class="n ok">0</td><td class="n">150×</td></tr>
-      <tr><td>programador</td><td class="n ok">✓</td><td class="n">80,2</td><td class="n ok">94,8</td><td class="n ok">91,0</td><td class="n ok">100</td><td class="n dim">—</td><td class="n ok">0</td><td class="n">20,9×</td></tr>
-      <tr><td>artista 3D</td><td class="n ok">✓</td><td class="n">9,0</td><td class="n">81,2</td><td class="n">77,2</td><td class="n ok">100</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">67×</td></tr>
-      <tr><td>motion</td><td class="n ok">✓</td><td class="n">12,7</td><td class="n">75,3</td><td class="n no">47,3</td><td class="n ok">100</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">83×</td></tr>
-      <tr><td>músico</td><td class="n ok">✓</td><td class="n">5,8</td><td class="n ok">93,3</td><td class="n ok">89,7</td><td class="n">92,3</td><td class="n dim">—</td><td class="n ok">0</td><td class="n">60×</td></tr>
-      <tr><td>ilustrador</td><td class="n ok">✓</td><td class="n">11,8</td><td class="n">82,5</td><td class="n no">51,2</td><td class="n">93,6</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">182×</td></tr>
-      <tr><td>gamer</td><td class="n ok">✓</td><td class="n">18,3</td><td class="n">78,5</td><td class="n">76,0</td><td class="n ok">100</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">149×</td></tr>
-      <tr><td>youtuber</td><td class="n ok">✓</td><td class="n">11,0</td><td class="n ok">91,2</td><td class="n ok">86,2</td><td class="n">86,6</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">42,9×</td></tr>
+
+      <tr><td>geral</td><td class="n no">✗</td><td class="n">76,8</td><td class="n">76,8</td><td class="n">67,5</td><td class="n ok">97,6</td><td class="n dim">—</td><td class="n ok">0</td><td class="n">6,3×</td></tr>
+      <tr><td>designer</td><td class="n ok">✓</td><td class="n">21,3</td><td class="n">74,0</td><td class="n">66,2</td><td class="n">83,2</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">81,7×</td></tr>
+      <tr><td>videomaker</td><td class="n ok">✓</td><td class="n">6,3</td><td class="n">75,2</td><td class="n">63,0</td><td class="n ok">97,5</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">65,5×</td></tr>
+      <tr><td>fotógrafo</td><td class="n ok">✓</td><td class="n">5,5</td><td class="n">69,2</td><td class="n">68,5</td><td class="n ok">100,0</td><td class="n dim">—</td><td class="n ok">0</td><td class="n">150,0×</td></tr>
+      <tr><td>programador</td><td class="n ok">✓</td><td class="n">80,2</td><td class="n ok">94,8</td><td class="n ok">91,0</td><td class="n ok">100,0</td><td class="n dim">—</td><td class="n ok">0</td><td class="n">20,9×</td></tr>
+      <tr><td>artista 3D</td><td class="n ok">✓</td><td class="n">9,0</td><td class="n">81,2</td><td class="n">77,2</td><td class="n ok">92,0</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">67,0×</td></tr>
+      <tr><td>motion</td><td class="n ok">✓</td><td class="n">12,7</td><td class="n">75,3</td><td class="n no">47,3</td><td class="n ok">96,1</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">83,0×</td></tr>
+      <tr><td>músico</td><td class="n ok">✓</td><td class="n">5,8</td><td class="n ok">93,3</td><td class="n ok">89,7</td><td class="n ok">93,0</td><td class="n dim">—</td><td class="n ok">0</td><td class="n">60,0×</td></tr>
+      <tr><td>ilustrador</td><td class="n ok">✓</td><td class="n">11,8</td><td class="n">82,5</td><td class="n no">51,2</td><td class="n ok">86,9</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">182,0×</td></tr>
+      <tr><td>gamer</td><td class="n ok">✓</td><td class="n">18,3</td><td class="n">78,5</td><td class="n">76,0</td><td class="n ok">100,0</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">149,0×</td></tr>
+      <tr><td>youtuber</td><td class="n ok">✓</td><td class="n">11,0</td><td class="n ok">91,2</td><td class="n ok">86,2</td><td class="n ok">91,6</td><td class="n ok">100%</td><td class="n ok">0</td><td class="n">42,9×</td></tr>
     </tbody>
   </table>
   </div>
@@ -661,6 +667,7 @@ pre .r{color:var(--stamp)}
     <li><b>Perfil "geral" não é detectado.</b> Por desenho — ele é o que sobra quando nenhuma profissão tem sinal. Mas significa que a detecção não distingue "pessoa comum" de "não sei".</li>
     <li><b>Fotógrafo tem 0% de instância preenchida</b> nesta rodada, porque a sessão de importação dele (<span class="m">03-casamento-silva</span>) não tinha molde com espaço a preencher no preset. É uma lacuna do teste, não necessariamente do produto — e é justamente o perfil em que a instância mais importaria.</li>
     <li><b>Programador começa em 80,2%</b> sem perfil nenhum, contra 5,5% do fotógrafo. Extensão de código é autoexplicativa; RAW de câmera não é. O ganho do sistema é muito desigual entre profissões.</li>
+    <li><b>Designer caiu para 83,2% no acerto quando age.</b> É o preço, medido, da mudança descrita na seção 12: o mapa genérico passou a agir em casos onde antes se calava. Designer é quem mais sofre porque é o perfil cujo mapa próprio mais se sobrepõe ao genérico.</li>
   </ul>
 </section>
 
@@ -674,14 +681,14 @@ pre .r{color:var(--stamp)}
     <thead><tr><th class="n">Arquivos</th><th class="n">Pastas</th><th class="n">Tempo</th><th>Observação</th></tr></thead>
     <tbody>
       <tr><td class="n">100.000</td><td class="n">—</td><td class="n">63 s</td><td>Primeira medição de escala.</td></tr>
-      <tr><td class="n">219.993</td><td class="n">4.538</td><td class="n">3,4 min</td><td>A rodada consolidada deste relatório.</td></tr>
+      <tr><td class="n">219.993</td><td class="n">4.538</td><td class="n">3,2 min</td><td>A rodada consolidada deste relatório.</td></tr>
       <tr><td class="n">999.996</td><td class="n">5.051</td><td class="n">9 min</td><td>Sem degradação de memória.</td></tr>
       <tr><td class="n">2.000.005</td><td class="n">—</td><td class="n">23,1 min</td><td>Linear. Nenhum ponto de quebra.</td></tr>
     </tbody>
   </table>
   </div>
 
-  <p>Vazão medida: <b>2.504 arquivos/s</b> gerando o corpus e <b>145,6 arquivos/s</b> classificando com extração de conteúdo ligada. Pico de memória de 216 MB em 220 mil arquivos, sem crescimento no caminho para 2 milhões — o caminhamento é em streaming e não guarda a árvore inteira.</p>
+  <p>Vazão medida: <b>2.508 arquivos/s</b> gerando o corpus e <b>169 arquivos/s</b> classificando com extração de conteúdo ligada. Pico de memória de 248 MB em 220 mil arquivos, sem crescimento no caminho para 2 milhões — o caminhamento é em streaming e não guarda a árvore inteira.</p>
 
   <h3>Por que não 10 milhões</h3>
   <p>Porque o acerto é medido por amostragem. Multiplicar o corpus por dez não muda a taxa de acerto — muda a barra de erro dela, e a barra de erro em 600 amostras por perfil já é pequena o bastante para as decisões que estamos tomando. O que a escala testa de verdade é vazão, memória e degradação, e essas três já estão medidas, estáveis e lineares até 2 milhões.</p>
@@ -730,6 +737,24 @@ pre .r{color:var(--stamp)}
     <p><b>A lição, escrita sem suavizar:</b> eu passei parte do dia otimizando contra um instrumento quebrado. Todo número desta sessão anterior à consolidação deve ser tratado como não comparável — e é por isso que a seção 10 inteira saiu de uma execução única, no mesmo commit, com semente fixa. Não é rigor decorativo: é a correção de um erro meu.</p>
   </div>
 
+  <h3>O erro de hoje: consertar um defeito criando outro</h3>
+  <p>Ao testar o primeiro uso num Mac simulado, o programa organizou <b>zero</b> arquivos entre onze soltos. A causa: o mapa genérico entrega 0,78 de confiança para quem tem profissão, e as duas portas de automação são 0,80 e 0,85 — 0,78 fica embaixo das duas. Fonte, instalador, captura de tela e boleto <em>nunca</em> se guardavam sozinhos na máquina de um profissional. É o mesmo defeito do item 01 abaixo, uma casa acima e nunca revisitado.</p>
+  <p>Subi para 0,85 e medi. O preço apareceu na hora:</p>
+  <div class="tabela">
+  <table>
+    <thead><tr><th>Métrica</th><th class="n">0,78 fixo</th><th class="n">0,85 fixo</th><th class="n">firme / não-firme</th></tr></thead>
+    <tbody>
+      <tr><td>acerto quando age</td><td class="n">97,3%</td><td class="n no">87,2%</td><td class="n ok">94,4%</td></tr>
+      <tr><td>perguntas</td><td class="n">2.471</td><td class="n">2.171</td><td class="n">2.408</td></tr>
+      <tr><td>decisões</td><td class="n">63</td><td class="n">57</td><td class="n">60</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Dez pontos de acerto, por agir em 300 arquivos a mais que ele não tinha como julgar bem. A resposta certa não era um número, eram três, e a divisão é <b>por destino</b>: boleto vai para <span class="m">Financeiro/Contas</span> na máquina do fotógrafo, do advogado e da minha avó — ninguém inventa árvore própria para conta de luz. Já <span class="m">video-bruto → Midia/Video/Bruto</span> está certo para uma pessoa comum e errado para um videomaker, que guarda por projeto; ali o genérico continua penalizado em 0,78.</p>
+  <div class="nota">
+    <p>Custou <b>2,9 pontos</b> de acerto-quando-age e fez o recurso existir para os dez perfis profissionais, onde ele simplesmente nunca agia. É uma troca, não uma melhoria — e por isso ela aparece aqui e não na seção 10.</p>
+  </div>
+
   <h3>O erro de apresentação</h3>
   <p>Separado dos quatro acima porque não foi um bug — foi uma escolha ruim de como contar. Eu apresentei "97,6% de acerto quando age" sem colocar ao lado que ele agia em 20% dos arquivos. Você pegou na hora. Os dois números só significam alguma coisa juntos, e desde então eles aparecem sempre juntos, mais um terceiro: quantas <em>decisões</em> a pessoa realmente toma.</p>
 
@@ -759,6 +784,19 @@ pre .r{color:var(--stamp)}
 
   <div class="nota">
     <p>Dois dos dezoito foram encontrados pelo verificador de tipos, não por teste nem por leitura. JSDoc com <span class="m">checkJs</span> custou meia hora de anotação e pagou duas vezes.</p>
+  </div>
+
+  <h3>Os erros que estavam neste documento</h3>
+  <p>Depois de publicar a primeira versão deste relatório, rodei cinco auditores em paralelo sobre o próprio HTML — um de estrutura, um de CSS, um de tema claro e escuro, um conferindo cada número contra o JSON da medição, e um caçando texto quebrado. Cada achado passou por um verificador cético instruído a refutar. <b>Vinte e um sobreviveram.</b></p>
+  <ul>
+    <li><b>A página rolava de lado no celular.</b> A coluna de texto é um item de grid, e item de grid se recusa a ficar mais estreito que o filho mais largo — a tabela de nove colunas da seção 10 esticava a coluna inteira para 657px dentro de uma tela de 400px. Toda linha de texto do documento saía pela direita.</li>
+    <li><b>Contraste abaixo do legível.</b> O tom cinza que veste quase todo texto de 10 a 12 píxeis rendia 3,89:1 sobre o papel claro, contra o mínimo de 4,5:1.</li>
+    <li><b>Três seletores descendentes pegando o que não deviam.</b> O padding das grades era aplicado em três níveis empilhados; um negrito no meio de uma frase virava bloco e partia a frase em três linhas; e um selo vermelho saía cinza e colado na palavra seguinte.</li>
+    <li><b>Números desatualizados ou errados.</b> Contagens de linha e de extensão que mudaram com o código, 21 dias descrito como meia-vida quando é constante de decaimento (a meia-vida é ~15), duas posições da cascata publicadas ao contrário do código, uma tabela fora de ordem, e uma repartição que deixava 55 arquivos de fora.</li>
+    <li><b>E o mais constrangedor:</b> a seção 2 publicava "de 26% para 88%" — exatamente o tipo de número anterior à consolidação que a seção 12 declara não comparável. O documento quebrava a própria regra na sua terceira frase.</li>
+  </ul>
+  <div class="nota">
+    <p>Vale registrar o que isso repete: dos erros da primeira sessão, quatro estavam no instrumento de medida. Destes, cinco estavam no <em>relatório sobre</em> o trabalho. O trabalho de verificar continua sendo mais barato do que o de confiar.</p>
   </div>
 
   <h3>O que a infraestrutura impediu</h3>
@@ -813,7 +851,7 @@ pre .r{color:var(--stamp)}
   <p class="lede">Ressalva antes de tudo: esta seção vinha de um fluxo de 17 agentes e 7 morreram no limite de gasto, incluindo o de síntese. O que está aqui veio do único agente de extração que terminou — e, mesmo assim, é a lista mais acionável do relatório.</p>
 
   <div class="bugs">
-    <div class="bug"><div class="i">01</div><div><b>Bug real de magic bytes em RAW</b> <span class="no">(pegou um erro nosso)</span><span>Em <span class="m">magic.js</span>, a assinatura TIFF <span class="m">49 49 2a 00</span> casa <em>antes</em> de qualquer RAW — porque CR2, NEF, ARW e DNG são TIFF por dentro. Um <span class="m">.cr2</span> com extensão mentirosa vira <span class="m">image/tiff</span>, cai no palpite de forma, e termina como "imagem" com 0,45 de confiança quando devia ser "raw" com 0,97. Isso ataca justamente o perfil fotógrafo, o pior da tabela. <em>fonte: file-type, MIT</em></span></div></div>
+    <div class="bug"><div class="i">01</div><div><b>Bug real de magic bytes em RAW <span class="no">(pegou um erro nosso)</span></b><span>Em <span class="m">magic.js</span>, a assinatura TIFF <span class="m">49 49 2a 00</span> casa <em>antes</em> de qualquer RAW — porque CR2, NEF, ARW e DNG são TIFF por dentro. Um <span class="m">.cr2</span> com extensão mentirosa vira <span class="m">image/tiff</span>, cai no palpite de forma, e termina como "imagem" com 0,45 de confiança quando devia ser "raw" com 0,97. Isso ataca justamente o perfil fotógrafo, o pior da tabela. <em>fonte: file-type, MIT</em></span></div></div>
     <div class="bug"><div class="i">02</div><div><b>Nome de arquivo de sistema, não extensão</b><span>Nosso <span class="m">neverTouch</span> só lista extensões, e a listagem só pula arquivo com ponto na frente — o que cobre <span class="m">.DS_Store</span> e nada do Windows. Falta uma lista de <em>nomes</em>: <span class="m">desktop.ini, thumbs.db, ntuser.dat, pagefile.sys, hiberfil.sys, autorun.inf, bootmgr, ntldr</span>, mais os atributos <span class="m">HIDDEN</span> e <span class="m">SYSTEM</span> do Windows. <em>fonte: mouzi, MIT</em></span></div></div>
     <div class="bug"><div class="i">03</div><div><b>Captura nomeada no conteúdo</b><span>Hoje a instância só sabe <em>escolher</em> entre pastas que já existem. O primeiro arquivo de um cliente novo vira pergunta para sempre — mesmo com a razão social em caixa alta na primeira página do PDF que a gente <em>já leu</em>. Falta uma tabela de captura: <span class="m">raz[ãa]o social[:\s]+(?&lt;cliente&gt;...)</span>, <span class="m">sacado[:\s]+(?&lt;cliente&gt;...)</span>, CNPJ. <em>fonte: organize, MIT</em></span></div></div>
     <div class="bug"><div class="i">04</div><div><b>Duplicata que já está medida e não é usada</b><span>O diário já calcula e guarda o <span class="m">sha1</span> de todo arquivo movido, e ninguém lê de volta. O nosso próprio sandbox cria <span class="m">duplicata_boleto_condominio_marco.pdf</span> e move os dois. Falta um <span class="m">porHash()</span>. Detalhe que o sortphotos ensina: o original é o <em>mais antigo</em>, não o primeiro encontrado.</span></div></div>
@@ -865,7 +903,7 @@ arquiteto    Obras/residencia-alves/03-Executivo/</pre>
   <ol>
     <li><b>Imobiliário</b> — o endereço é o identificador mais forte que existe numa vertical: está em quase toda página de quase todo documento, e o conjunto canônico tem só ~13 tipos.</li>
     <li><b>Financeiro e fiscal</b> — CNPJ, nota, boleto, extrato. Formato rígido, alto volume, dor recorrente.</li>
-    <li><b>Fotógrafo</b> — maior ganho absoluto (5,5% sem perfil) e o perfil onde a instância mais importa.</li>
+    <li><b>Fotógrafo</b> — o pior ponto de partida sem perfil (5,5%) e o perfil onde a instância mais importa.</li>
   </ol>
 </section>
 
@@ -934,7 +972,7 @@ node cli.js undo</pre>
 </section>
 
 <div class="fim">
-  Pastinha · branch <b>claude/tamagotchi-file-organizer-xpa9x3</b> · 6.823 linhas · 0 dependências<br>
+  Pastinha · branch <b>claude/tamagotchi-file-organizer-xpa9x3</b> · 6.878 linhas · 0 dependências<br>
   Medição consolidada de 11 set 2026 · 219.993 arquivos · commit único · semente 20260911 · <span class="m">--no-model</span> em tudo
 </div>
 
